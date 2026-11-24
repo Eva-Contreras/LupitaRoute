@@ -80,3 +80,21 @@ export interface HistorialEstado {
   ubicacionActual?: string
   fechaCambio: string
 }
+
+// Forma real que devuelve EnviosController (EnvioDetalleDto)
+export interface EnvioDetalle {
+  envioId: number
+  codigoRastreo: string
+  remitente: string
+  repartidor?: string
+  receptor: string
+  direccionOrigen: string
+  direccionDestino: string
+  descripcionPaquete: string
+  pesoKg: number
+  distanciaKm: number
+  costoTotal: number
+  estadoActualId: number
+  estadoActual: string
+  fechaCreacion: string
+}

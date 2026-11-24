@@ -1,45 +1,69 @@
 import { useState, type FormEvent } from 'react'
-import { ESTADOS_ENVIO, esEstadoEnvio } from '../../types/envio.types'
-import type { EntregaDemostracion, EstadoEnvio } from '../../types/envio.types'
+import type { EnvioDetalle, EstadoPaquete } from '../../types/lupita.types'
 
 interface ActualizarEstadoProps {
-  entregas: EntregaDemostracion[]
-  codigoInicial: string
+  entregas: EnvioDetalle[]
+  estados: EstadoPaquete[]
+  envioIdInicial: number | null
   onGuardar: (
-    codigo: string,
-    estado: EstadoEnvio,
+    envioId: number,
+    estadoId: number,
     comentario: string,
-    ubicacionActual: string,
-  ) => void
+  ) => Promise<void>
 }
-
-// El repartidor no puede regresar un paquete a "Creado".
-const ESTADOS_REPARTIDOR = ESTADOS_ENVIO.filter((estado) => estado !== 'Creado')
 
 export function ActualizarEstado({
   entregas,
-  codigoInicial,
+  estados,
+  envioIdInicial,
   onGuardar,
 }: ActualizarEstadoProps) {
-  const [codigo, setCodigo] = useState(codigoInicial)
-  const [nuevoEstado, setNuevoEstado] = useState<EstadoEnvio | ''>('')
+  const [envioId, setEnvioId] = useState(
+    envioIdInicial === null ? '' : String(envioIdInicial),
+  )
+  const [nuevoEstadoId, setNuevoEstadoId] = useState('')
   const [comentario, setComentario] = useState('')
-  const [ubicacion, setUbicacion] = useState('')
+  const [guardando, setGuardando] = useState(false)
   const [confirmacion, setConfirmacion] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const entregaActual = entregas.find((entrega) => entrega.codigo === codigo)
+  const entregaActual = entregas.find(
+    (entrega) => String(entrega.envioId) === envioId,
+  )
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!entregaActual || nuevoEstado === '') {
+    if (!entregaActual || nuevoEstadoId === '') {
       return
     }
 
-    onGuardar(codigo, nuevoEstado, comentario.trim(), ubicacion.trim())
-    setConfirmacion(`${codigo} ahora está en estado «${nuevoEstado}».`)
-    setNuevoEstado('')
-    setComentario('')
-    setUbicacion('')
+    setGuardando(true)
+    setError(null)
+    setConfirmacion(null)
+
+    try {
+      await onGuardar(
+        entregaActual.envioId,
+        Number(nuevoEstadoId),
+        comentario.trim(),
+      )
+      const nombre =
+        estados.find((estado) => String(estado.estadoId) === nuevoEstadoId)
+          ?.nombre ?? ''
+      setConfirmacion(
+        `${entregaActual.codigoRastreo} ahora está en estado «${nombre}».`,
+      )
+      setNuevoEstadoId('')
+      setComentario('')
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'No se pudo actualizar el estado.',
+      )
+    } finally {
+      setGuardando(false)
+    }
   }
 
   return (
@@ -52,7 +76,6 @@ export function ActualizarEstado({
           <h2 id="update-status-title">Actualizar estado</h2>
           <p>Registra el avance de una entrega y deja un comentario.</p>
         </div>
-        <span className="section-caption">Formulario de demostración</span>
       </header>
 
       <form className="create-shipment-form" onSubmit={handleSubmit}>
@@ -63,20 +86,21 @@ export function ActualizarEstado({
           <h3 id="delivery-pick-title">Entrega</h3>
           <div className="create-shipment-grid">
             <div className="quote-field">
-              <label htmlFor="entrega-codigo">Envío</label>
+              <label htmlFor="entrega-envio">Envío</label>
               <select
-                id="entrega-codigo"
-                value={codigo}
+                id="entrega-envio"
+                value={envioId}
                 onChange={(event) => {
-                  setCodigo(event.currentTarget.value)
+                  setEnvioId(event.currentTarget.value)
                   setConfirmacion(null)
+                  setError(null)
                 }}
                 required
               >
                 <option value="">Selecciona un envío</option>
                 {entregas.map((entrega) => (
-                  <option key={entrega.codigo} value={entrega.codigo}>
-                    {entrega.codigo} · {entrega.destinatario}
+                  <option key={entrega.envioId} value={entrega.envioId}>
+                    {entrega.codigoRastreo} · {entrega.receptor}
                   </option>
                 ))}
               </select>
@@ -86,7 +110,7 @@ export function ActualizarEstado({
               <input
                 id="entrega-estado-actual"
                 type="text"
-                value={entregaActual?.estado ?? '—'}
+                value={entregaActual?.estadoActual ?? '—'}
                 readOnly
               />
             </div>
@@ -96,7 +120,7 @@ export function ActualizarEstado({
                 <input
                   id="entrega-direccion"
                   type="text"
-                  value={entregaActual.direccion}
+                  value={entregaActual.direccionDestino}
                   readOnly
                 />
               </div>
@@ -110,40 +134,21 @@ export function ActualizarEstado({
         >
           <h3 id="new-status-title">Nuevo estado</h3>
           <div className="create-shipment-grid">
-            <div className="quote-field">
+            <div className="quote-field create-shipment-field--wide">
               <label htmlFor="entrega-nuevo-estado">Estado</label>
               <select
                 id="entrega-nuevo-estado"
-                value={nuevoEstado}
-                onChange={(event) => {
-                  const value = event.currentTarget.value
-                  if (value === '' || esEstadoEnvio(value)) {
-                    setNuevoEstado(value)
-                  }
-                }}
+                value={nuevoEstadoId}
+                onChange={(event) => setNuevoEstadoId(event.currentTarget.value)}
                 required
               >
                 <option value="">Selecciona un estado</option>
-                {ESTADOS_REPARTIDOR.map((estado) => (
-                  <option key={estado} value={estado}>
-                    {estado}
+                {estados.map((estado) => (
+                  <option key={estado.estadoId} value={estado.estadoId}>
+                    {estado.nombre}
                   </option>
                 ))}
               </select>
-            </div>
-            <div className="quote-field">
-              <label htmlFor="entrega-ubicacion">
-                Ubicación actual{' '}
-                <span className="optional-label">(opcional)</span>
-              </label>
-              <input
-                id="entrega-ubicacion"
-                name="ubicacionActual"
-                type="text"
-                placeholder="Ej. Zona Centro"
-                value={ubicacion}
-                onChange={(event) => setUbicacion(event.currentTarget.value)}
-              />
             </div>
             <div className="quote-field create-shipment-field--wide">
               <label htmlFor="entrega-comentario">
@@ -162,16 +167,18 @@ export function ActualizarEstado({
         </section>
 
         <footer className="create-shipment-footer">
-          <p className="quote-demo-note" role="status">
-            {confirmacion ??
-              'Este formulario es visual. El cambio no se guardará hasta conectar la API.'}
+          <p
+            className={`quote-demo-note${error ? ' form-message--error' : ''}`}
+            role={error ? 'alert' : 'status'}
+          >
+            {error ?? confirmacion ?? ''}
           </p>
           <button
             className="quote-submit"
             type="submit"
-            disabled={!entregaActual || nuevoEstado === ''}
+            disabled={!entregaActual || nuevoEstadoId === '' || guardando}
           >
-            Guardar estado
+            {guardando ? 'Guardando…' : 'Guardar estado'}
           </button>
         </footer>
       </form>

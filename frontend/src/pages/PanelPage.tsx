@@ -6,10 +6,11 @@ import type { Usuario } from '../types/lupita.types'
 
 interface PanelPageProps {
   usuario: Usuario
+  token: string
   onExit: () => void
 }
 
-export function PanelPage({ usuario, onExit }: PanelPageProps) {
+export function PanelPage({ usuario, token, onExit }: PanelPageProps) {
   const rol = usuario.rol
 
   return (
@@ -33,7 +34,9 @@ export function PanelPage({ usuario, onExit }: PanelPageProps) {
         </section>
 
         {rol === 'Remitente' && <RemitentePanel />}
-        {rol === 'Repartidor' && <RepartidorPanel />}
+        {rol === 'Repartidor' && (
+          <RepartidorPanel token={token} onSesionExpirada={onExit} />
+        )}
         {rol === 'Receptor' && <ReceptorPanel />}
       </main>
     </div>

@@ -3,37 +3,72 @@ import { ActualizarEstado } from './ActualizarEstado'
 import { MisEntregas } from './MisEntregas'
 import { NavegacionRepartidor } from './NavegacionRepartidor'
 import type { SeccionRepartidor } from './NavegacionRepartidor'
-import { entregasDemo } from '../../data/enviosDemo'
-import type { EntregaDemostracion, EstadoEnvio } from '../../types/envio.types'
+import { useEntregas } from './useEntregas'
 
-export function RepartidorPanel() {
+interface RepartidorPanelProps {
+  token: string
+  onSesionExpirada: () => void
+}
+
+export function RepartidorPanel({
+  token,
+  onSesionExpirada,
+}: RepartidorPanelProps) {
   const [seccion, setSeccion] = useState<SeccionRepartidor>('entregas')
-  const [entregas, setEntregas] = useState<EntregaDemostracion[]>(entregasDemo)
-  const [codigoSeleccionado, setCodigoSeleccionado] = useState('')
+  const [envioSeleccionado, setEnvioSeleccionado] = useState<number | null>(
+    null,
+  )
+  const { envios, estados, cargando, error, reintentar, cambiarEstado } =
+    useEntregas(token)
 
-  function irAActualizar(codigo: string) {
-    setCodigoSeleccionado(codigo)
+  function irAActualizar(envioId: number) {
+    setEnvioSeleccionado(envioId)
     setSeccion('actualizar')
   }
 
-  function guardarEstado(
-    codigo: string,
-    estado: EstadoEnvio,
-    comentario: string,
-    ubicacionActual: string,
-  ) {
-    setEntregas((actuales) =>
-      actuales.map((entrega) =>
-        entrega.codigo === codigo
-          ? {
-              ...entrega,
-              estado,
-              comentario: comentario || undefined,
-              ubicacionActual: ubicacionActual || undefined,
-              ultimaActualizacion: new Date().toISOString(),
-            }
-          : entrega,
-      ),
+  let contenido
+  if (cargando) {
+    contenido = (
+      <section className="sender-shipments panel-state" role="status">
+        <p>Cargando tus entregas…</p>
+      </section>
+    )
+  } else if (error) {
+    contenido = (
+      <section className="sender-shipments panel-state" role="alert">
+        <p className="panel-state__error">{error.mensaje}</p>
+        {error.sesionExpirada ? (
+          <button
+            className="shipment-action"
+            type="button"
+            onClick={onSesionExpirada}
+          >
+            Volver a iniciar sesión
+          </button>
+        ) : (
+          <button className="shipment-action" type="button" onClick={reintentar}>
+            Reintentar
+          </button>
+        )}
+      </section>
+    )
+  } else if (seccion === 'entregas') {
+    contenido = (
+      <MisEntregas
+        entregas={envios}
+        estados={estados}
+        onActualizar={irAActualizar}
+      />
+    )
+  } else {
+    contenido = (
+      <ActualizarEstado
+        key={envioSeleccionado ?? 'sin-seleccion'}
+        entregas={envios}
+        estados={estados}
+        envioIdInicial={envioSeleccionado}
+        onGuardar={cambiarEstado}
+      />
     )
   }
 
@@ -43,17 +78,7 @@ export function RepartidorPanel() {
         seccionActiva={seccion}
         onCambiarSeccion={setSeccion}
       />
-      {seccion === 'entregas' && (
-        <MisEntregas entregas={entregas} onActualizar={irAActualizar} />
-      )}
-      {seccion === 'actualizar' && (
-        <ActualizarEstado
-          key={codigoSeleccionado}
-          entregas={entregas}
-          codigoInicial={codigoSeleccionado}
-          onGuardar={guardarEstado}
-        />
-      )}
+      {contenido}
     </div>
   )
 }
