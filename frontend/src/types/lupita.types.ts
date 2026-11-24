@@ -98,3 +98,28 @@ export interface EnvioDetalle {
   estadoActual: string
   fechaCreacion: string
 }
+
+// POST api/Envios/cotizar (CotizarRequestDto / CotizarResponseDto)
+export interface CotizarRequest {
+  pesoKg: number
+  distanciaKm: number
+}
+
+export interface CotizarResponse {
+  nombreTarifa: string
+  pesoKg: number
+  distanciaKm: number
+  precioBase: number
+  precioPorKm: number
+  costoTotal: number
+}
+
+// POST api/Envios (CrearEnvioRequestDto)
+export interface NuevoEnvioRequest {
+  correoReceptor: string
+  direccionOrigen: string
+  direccionDestino: string
+  descripcionPaquete: string
+  pesoKg: number
+  distanciaKm: number
+}

@@ -1,4 +1,10 @@
-import type { EnvioDetalle, EstadoPaquete } from '../types/lupita.types'
+import type {
+  CotizarRequest,
+  CotizarResponse,
+  EnvioDetalle,
+  EstadoPaquete,
+  NuevoEnvioRequest,
+} from '../types/lupita.types'
 
 export class ErrorApi extends Error {
   readonly estado: number | null
@@ -78,6 +84,24 @@ function leerEnvio(value: unknown): EnvioDetalle | null {
   }
 }
 
+function leerCotizacion(value: unknown): CotizarResponse | null {
+  if (!esRegistro(value)) {
+    return null
+  }
+  const costoTotal = campo(value, 'costoTotal')
+  if (typeof costoTotal !== 'number') {
+    return null
+  }
+  return {
+    nombreTarifa: texto(campo(value, 'nombreTarifa')),
+    pesoKg: numero(campo(value, 'pesoKg')),
+    distanciaKm: numero(campo(value, 'distanciaKm')),
+    precioBase: numero(campo(value, 'precioBase')),
+    precioPorKm: numero(campo(value, 'precioPorKm')),
+    costoTotal,
+  }
+}
+
 function lista<T>(payload: unknown, leer: (item: unknown) => T | null): T[] {
   if (!Array.isArray(payload)) {
     throw new ErrorApi('La API devolvió una respuesta no válida.')
@@ -88,9 +112,32 @@ function lista<T>(payload: unknown, leer: (item: unknown) => T | null): T[] {
   })
 }
 
+// El backend responde { mensaje } en los errores de negocio y, cuando falla una
+// validación de [Range]/[Required], un objeto { errors: { Campo: [mensajes] } }.
+function mensajeDeError(payload: unknown): string {
+  if (!esRegistro(payload)) {
+    return ''
+  }
+  const mensaje = texto(payload.mensaje)
+  if (mensaje) {
+    return mensaje
+  }
+  if (esRegistro(payload.errors)) {
+    for (const valor of Object.values(payload.errors)) {
+      if (Array.isArray(valor)) {
+        const primero = valor.find((item) => typeof item === 'string')
+        if (typeof primero === 'string') {
+          return primero
+        }
+      }
+    }
+  }
+  return ''
+}
+
 interface Solicitud {
   ruta: string
-  metodo?: 'GET' | 'PUT'
+  metodo?: 'GET' | 'POST' | 'PUT'
   token?: string
   cuerpo?: unknown
 }
@@ -140,7 +187,7 @@ async function solicitar({
   }
 
   if (!response.ok) {
-    const mensaje = esRegistro(payload) ? texto(payload.mensaje) : ''
+    const mensaje = mensajeDeError(payload)
     throw new ErrorApi(
       mensaje || `La API respondió con un error (HTTP ${response.status}).`,
       response.status,
@@ -175,4 +222,38 @@ export async function actualizarEstado(
     token,
     cuerpo: { nuevoEstadoId, comentario },
   })
+}
+
+// POST api/Envios/cotizar (público)
+export async function cotizarEnvio(
+  solicitud: CotizarRequest,
+): Promise<CotizarResponse> {
+  const payload = await solicitar({
+    ruta: '/api/Envios/cotizar',
+    metodo: 'POST',
+    cuerpo: solicitud,
+  })
+  const cotizacion = leerCotizacion(payload)
+  if (!cotizacion) {
+    throw new ErrorApi('La API devolvió una cotización no válida.')
+  }
+  return cotizacion
+}
+
+// POST api/Envios (solo Remitente)
+export async function crearEnvio(
+  token: string,
+  solicitud: NuevoEnvioRequest,
+): Promise<EnvioDetalle> {
+  const payload = await solicitar({
+    ruta: '/api/Envios',
+    metodo: 'POST',
+    token,
+    cuerpo: solicitud,
+  })
+  const envio = leerEnvio(payload)
+  if (!envio) {
+    throw new ErrorApi('La API devolvió un envío no válido.')
+  }
+  return envio
 }
