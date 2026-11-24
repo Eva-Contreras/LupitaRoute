@@ -47,6 +47,23 @@ export default defineConfig([
 
 ```
 
+## Configuración de la API local
+
+La URL de la API se configura en `VITE_API_URL`. El archivo `.env.local` usa por
+defecto la URL HTTPS local del backend (`https://localhost:7234`); edítala si la
+API está disponible en otra dirección. Para preparar otra máquina, copia
+`.env.example` como `.env.local`. No incluyas credenciales ni secretos en estos
+archivos.
+
+El inicio de sesión envía `correo` y `password` a `POST /api/Auth/login`. La
+sesión se mantiene solo en memoria y se limpia al cerrar sesión.
+
+## Comandos
+
+- `npm run dev`: inicia el servidor local de Vite.
+- `npm run build`: verifica los tipos y genera la compilación.
+- `npm run lint`: ejecuta ESLint.
+
 You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
 
 ```js

@@ -1,22 +1,16 @@
-import { useState } from 'react'
 import { BrandName } from '../components/BrandName'
 import { ReceptorPanel } from '../components/ReceptorPanel'
 import { RepartidorPanel } from '../components/RepartidorPanel'
 import { PanelRemitente } from '../components/remitente/PanelRemitente'
-import type { RolNombre } from '../types/lupita.types'
+import type { Usuario } from '../types/lupita.types'
 
 interface PanelPageProps {
+  usuario: Usuario
   onExit: () => void
 }
 
-const nombresPorRol: Record<RolNombre, string> = {
-  Remitente: 'María López',
-  Repartidor: 'Carlos Ruiz',
-  Receptor: 'Ana García',
-}
-
-export function PanelPage({ onExit }: PanelPageProps) {
-  const [rol, setRol] = useState<RolNombre>('Remitente')
+export function PanelPage({ usuario, onExit }: PanelPageProps) {
+  const rol = usuario.rol
 
   return (
     <div className="dashboard-page">
@@ -25,29 +19,8 @@ export function PanelPage({ onExit }: PanelPageProps) {
           <BrandName />
         </a>
         <div className="dashboard-header-actions">
-          <label className="role-preview">
-            <span>Vista de demostración</span>
-            <select
-              aria-label="Seleccionar rol para previsualizar"
-              value={rol}
-              onChange={(event) => {
-                const nuevoRol = event.currentTarget.value
-                if (
-                  nuevoRol === 'Remitente' ||
-                  nuevoRol === 'Repartidor' ||
-                  nuevoRol === 'Receptor'
-                ) {
-                  setRol(nuevoRol)
-                }
-              }}
-            >
-              <option value="Remitente">Remitente</option>
-              <option value="Repartidor">Repartidor</option>
-              <option value="Receptor">Receptor</option>
-            </select>
-          </label>
           <button className="dashboard-exit" type="button" onClick={onExit}>
-            Volver al inicio
+            Cerrar sesión
           </button>
         </div>
       </header>
@@ -55,7 +28,7 @@ export function PanelPage({ onExit }: PanelPageProps) {
       <main className="dashboard-main" id="inicio">
         <section className="dashboard-welcome">
           <p className="dashboard-eyebrow">Panel de control · {rol}</p>
-          <h1>Hola, {nombresPorRol[rol]}</h1>
+          <h1>Hola, {usuario.nombreCompleto}</h1>
           <p>Consulta y administra tus envíos desde un solo lugar.</p>
         </section>
 
