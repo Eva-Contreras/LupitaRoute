@@ -1034,3 +1034,7 @@ textarea {
 .form-message--error {
   color: var(--estado-incidencia-texto);
 }
+
+.form-message--success {
+  color: var(--estado-entregado-texto);
+}

@@ -1,18 +1,19 @@
-import { ESTADOS_ENVIO, esEstadoEnvio } from '../../types/envio.types'
-import type { EstadoEnvio } from '../../types/envio.types'
+import type { EstadoPaquete } from '../../types/lupita.types'
 
 interface FiltrosEnviosProps {
+  estados: EstadoPaquete[]
   busqueda: string
-  estado: EstadoEnvio | ''
+  estado: string
   fechaDesde: string
   fechaHasta: string
   onCambiarBusqueda: (value: string) => void
-  onCambiarEstado: (value: EstadoEnvio | '') => void
+  onCambiarEstado: (value: string) => void
   onCambiarFechaDesde: (value: string) => void
   onCambiarFechaHasta: (value: string) => void
 }
 
 export function FiltrosEnvios({
+  estados,
   busqueda,
   estado,
   fechaDesde,
@@ -30,30 +31,25 @@ export function FiltrosEnvios({
           type="search"
           value={busqueda}
           onChange={(event) => onCambiarBusqueda(event.currentTarget.value)}
-          placeholder="Código o destinatario"
+          placeholder="Código o receptor"
         />
       </label>
       <label className="shipment-filter">
         <span>Estado</span>
         <select
           value={estado}
-          onChange={(event) => {
-            const value = event.currentTarget.value
-            if (value === '' || esEstadoEnvio(value)) {
-              onCambiarEstado(value)
-            }
-          }}
+          onChange={(event) => onCambiarEstado(event.currentTarget.value)}
         >
           <option value="">Todos los estados</option>
-          {ESTADOS_ENVIO.map((estadoEnvio) => (
-            <option key={estadoEnvio} value={estadoEnvio}>
-              {estadoEnvio}
+          {estados.map((item) => (
+            <option key={item.estadoId} value={item.nombre}>
+              {item.nombre}
             </option>
           ))}
         </select>
       </label>
       <label className="shipment-filter">
-        <span>Desde</span>
+        <span>Creado desde</span>
         <input
           type="date"
           value={fechaDesde}
@@ -61,7 +57,7 @@ export function FiltrosEnvios({
         />
       </label>
       <label className="shipment-filter">
-        <span>Hasta</span>
+        <span>Creado hasta</span>
         <input
           type="date"
           value={fechaHasta}

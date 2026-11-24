@@ -33,7 +33,9 @@ export function PanelPage({ usuario, token, onExit }: PanelPageProps) {
           <p>Consulta y administra tus envíos desde un solo lugar.</p>
         </section>
 
-        {rol === 'Remitente' && <RemitentePanel />}
+        {rol === 'Remitente' && (
+          <RemitentePanel token={token} onSesionExpirada={onExit} />
+        )}
         {rol === 'Repartidor' && (
           <RepartidorPanel token={token} onSesionExpirada={onExit} />
         )}

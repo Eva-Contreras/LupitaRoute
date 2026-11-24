@@ -1,22 +1,24 @@
-import type { EstadoEnvio, EnvioDemostracion } from '../../types/envio.types'
+import { claseEstado } from '../repartidor/claseEstado'
+import type { EnvioDetalle } from '../../types/lupita.types'
 
 interface TablaEnviosProps {
-  envios: EnvioDemostracion[]
-}
-
-const clasesPorEstado: Record<EstadoEnvio, string> = {
-  Creado: 'creado',
-  Recolectado: 'recolectado',
-  'En tránsito': 'en-transito',
-  'En reparto': 'en-reparto',
-  Entregado: 'entregado',
-  Incidencia: 'incidencia',
+  envios: EnvioDetalle[]
 }
 
 const formatoFecha = new Intl.DateTimeFormat('es-MX', {
   dateStyle: 'medium',
   timeStyle: 'short',
 })
+
+const formatoMoneda = new Intl.NumberFormat('es-MX', {
+  style: 'currency',
+  currency: 'MXN',
+})
+
+function fechaLegible(valor: string): string {
+  const fecha = new Date(valor)
+  return Number.isNaN(fecha.getTime()) ? '—' : formatoFecha.format(fecha)
+}
 
 export function TablaEnvios({ envios }: TablaEnviosProps) {
   return (
@@ -25,35 +27,35 @@ export function TablaEnvios({ envios }: TablaEnviosProps) {
         <thead>
           <tr>
             <th scope="col">Código</th>
-            <th scope="col">Destinatario</th>
-            <th scope="col">Destino</th>
-            <th scope="col">Última actualización</th>
+            <th scope="col">Receptor</th>
+            <th scope="col">Dirección de entrega</th>
+            <th scope="col">Repartidor</th>
+            <th scope="col">Creado</th>
             <th scope="col">Estado</th>
             <th scope="col">Costo</th>
           </tr>
         </thead>
         <tbody>
           {envios.map((envio) => (
-            <tr key={envio.codigo}>
-              <td className="shipment-code">{envio.codigo}</td>
-              <td>{envio.destinatario}</td>
-              <td>{envio.destino}</td>
-              <td>
-                {formatoFecha.format(new Date(envio.ultimaActualizacion))}
-              </td>
+            <tr key={envio.envioId}>
+              <td className="shipment-code">{envio.codigoRastreo}</td>
+              <td>{envio.receptor}</td>
+              <td>{envio.direccionDestino}</td>
+              <td>{envio.repartidor ?? 'Sin asignar'}</td>
+              <td>{fechaLegible(envio.fechaCreacion)}</td>
               <td>
                 <span
-                  className={`status-badge status-badge--${clasesPorEstado[envio.estado]}`}
+                  className={`status-badge status-badge--${claseEstado(envio.estadoActual)}`}
                 >
-                  {envio.estado}
+                  {envio.estadoActual}
                 </span>
               </td>
-              <td>${envio.costo.toFixed(2)}</td>
+              <td>{formatoMoneda.format(envio.costoTotal)}</td>
             </tr>
           ))}
           {envios.length === 0 && (
             <tr>
-              <td className="shipment-empty" colSpan={6}>
+              <td className="shipment-empty" colSpan={7}>
                 No hay envíos que coincidan con los filtros.
               </td>
             </tr>
