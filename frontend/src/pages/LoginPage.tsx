@@ -1,9 +1,19 @@
 import { BrandName } from '../components/BrandName'
 
-export function LoginPage() {
+interface LoginPageProps {
+  onAccept: () => void
+}
+
+export function LoginPage({ onAccept }: LoginPageProps) {
   return (
     <main className="login-page">
-      <form className="login-card">
+      <form
+        className="login-card"
+        onSubmit={(event) => {
+          event.preventDefault()
+          onAccept()
+        }}
+      >
         <header className="login-header">
           <h1>
             <BrandName />
@@ -28,9 +38,12 @@ export function LoginPage() {
             autoComplete="current-password"
           />
         </div>
-        <button className="login-button" type="button">
+        <button className="login-button" type="submit">
           Aceptar
         </button>
+        <p className="login-demo-note">
+          Vista de demostración: no se validan las credenciales.
+        </p>
       </form>
     </main>
   )
