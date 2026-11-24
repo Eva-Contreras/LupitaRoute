@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { FiltrosEnvios } from './FiltrosEnvios'
-import { TablaEnvios } from './TablaEnvios'
-import { DetalleEnvio } from '../shared/DetalleEnvio'
+import { FiltrosEnvios } from '../FiltrosEnvios'
+import { TablaEnvios } from '../TablaEnvios'
+import { DetalleEnvio } from '../DetalleEnvio'
+import { filtrarEnvios } from '../filtrarEnvios'
 import type { EnvioDetalle, EstadoPaquete } from '../../types/envio.types'
 
 interface MisEnviosProps {
@@ -29,30 +30,7 @@ export function MisEnvios({ envios, estados, onActualizar }: MisEnviosProps) {
     )
   }
 
-  const termino = busqueda.trim().toLocaleLowerCase()
-  const enviosFiltrados = envios
-    .filter((envio) => {
-      const coincideBusqueda =
-        termino.length === 0 ||
-        envio.codigoRastreo.toLocaleLowerCase().includes(termino) ||
-        envio.receptor.toLocaleLowerCase().includes(termino)
-      const fechaCreacion = envio.fechaCreacion.slice(0, 10)
-      const coincideEstado = estado === '' || envio.estadoActual === estado
-      const coincideFechaDesde = fechaDesde === '' || fechaCreacion >= fechaDesde
-      const coincideFechaHasta = fechaHasta === '' || fechaCreacion <= fechaHasta
-
-      return (
-        coincideBusqueda &&
-        coincideEstado &&
-        coincideFechaDesde &&
-        coincideFechaHasta
-      )
-    })
-    .sort(
-      (a, b) =>
-        (new Date(b.fechaCreacion).getTime() || 0) -
-        (new Date(a.fechaCreacion).getTime() || 0),
-    )
+  const enviosFiltrados = filtrarEnvios(envios, { busqueda, estado, fechaDesde, fechaHasta })
 
   return (
     <section className="sender-shipments" aria-labelledby="shipments-title">
@@ -64,6 +42,7 @@ export function MisEnvios({ envios, estados, onActualizar }: MisEnviosProps) {
       </header>
 
       <FiltrosEnvios
+        etiqueta="Filtros de envíos"
         estados={estados}
         busqueda={busqueda}
         estado={estado}
@@ -74,7 +53,7 @@ export function MisEnvios({ envios, estados, onActualizar }: MisEnviosProps) {
         onCambiarFechaDesde={setFechaDesde}
         onCambiarFechaHasta={setFechaHasta}
       />
-      <TablaEnvios envios={enviosFiltrados} onSeleccionar={setSeleccionado} />
+      <TablaEnvios vista="remitente" envios={enviosFiltrados} onSeleccionar={setSeleccionado} />
     </section>
   )
 }

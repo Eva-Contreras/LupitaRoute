@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { BrandName } from '../components/shared/BrandName'
+import { BrandName } from '../components/BrandName'
 import { registrarReceptor } from '../services/auth'
 
 interface RegistroReceptorPageProps {

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { BrandName } from '../components/shared/BrandName'
+import { BrandName } from '../components/BrandName'
 import { login } from '../services/auth'
 import type { AuthResponse } from '../types/auth.types'
 

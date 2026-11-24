@@ -77,6 +77,11 @@ actualiza el estado y vuelve a consultar “Mis entregas”. La asignación la r
 el procedimiento del backend; el frontend no puede evitar asignaciones
 simultáneas.
 
+Los componentes reutilizados por varios roles están en la raíz de
+`src/components`; las carpetas `remitente`, `repartidor` y `receptor` contienen
+las vistas específicas de cada rol. La tabla y los filtros compartidos
+conservan las columnas y acciones correspondientes a cada vista.
+
 ## Comandos
 
 - `npm run dev`: inicia el servidor local de Vite.

@@ -1,6 +1,7 @@
-import type { EstadoPaquete } from '../../types/envio.types'
+import type { EstadoPaquete } from '../types/envio.types'
 
 interface FiltrosEnviosProps {
+  etiqueta: string
   estados: EstadoPaquete[]
   busqueda: string
   estado: string
@@ -13,6 +14,7 @@ interface FiltrosEnviosProps {
 }
 
 export function FiltrosEnvios({
+  etiqueta,
   estados,
   busqueda,
   estado,
@@ -24,7 +26,7 @@ export function FiltrosEnvios({
   onCambiarFechaHasta,
 }: FiltrosEnviosProps) {
   return (
-    <div className="shipment-filters" aria-label="Filtros de envíos">
+    <div className="shipment-filters" aria-label={etiqueta}>
       <label className="shipment-filter shipment-filter--search">
         <span>Buscar</span>
         <input

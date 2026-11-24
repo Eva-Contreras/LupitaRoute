@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { FiltrosEntregas } from './FiltrosEntregas'
-import { TablaEntregas } from './TablaEntregas'
-import { DetalleEnvio } from '../shared/DetalleEnvio'
+import { FiltrosEnvios } from '../FiltrosEnvios'
+import { TablaEnvios } from '../TablaEnvios'
+import { DetalleEnvio } from '../DetalleEnvio'
+import { filtrarEnvios } from '../filtrarEnvios'
 import type { EnvioDetalle, EstadoPaquete } from '../../types/envio.types'
 
 interface MisEntregasProps {
@@ -44,30 +45,7 @@ export function MisEntregas({
     )
   }
 
-  const termino = busqueda.trim().toLocaleLowerCase()
-  const entregasFiltradas = entregas
-    .filter((entrega) => {
-      const coincideBusqueda =
-        termino.length === 0 ||
-        entrega.codigoRastreo.toLocaleLowerCase().includes(termino) ||
-        entrega.receptor.toLocaleLowerCase().includes(termino)
-      const fechaCreacion = entrega.fechaCreacion.slice(0, 10)
-      const coincideEstado = estado === '' || entrega.estadoActual === estado
-      const coincideFechaDesde = fechaDesde === '' || fechaCreacion >= fechaDesde
-      const coincideFechaHasta = fechaHasta === '' || fechaCreacion <= fechaHasta
-
-      return (
-        coincideBusqueda &&
-        coincideEstado &&
-        coincideFechaDesde &&
-        coincideFechaHasta
-      )
-    })
-    .sort(
-      (a, b) =>
-        (new Date(b.fechaCreacion).getTime() || 0) -
-        (new Date(a.fechaCreacion).getTime() || 0),
-    )
+  const entregasFiltradas = filtrarEnvios(entregas, { busqueda, estado, fechaDesde, fechaHasta })
 
   const enReparto = entregas.filter((e) => e.estadoActual === 'En reparto').length
   const entregadas = entregas.filter((e) => e.estadoActual === 'Entregado').length
@@ -107,7 +85,8 @@ export function MisEntregas({
         </article>
       </div>
 
-      <FiltrosEntregas
+      <FiltrosEnvios
+        etiqueta="Filtros de entregas"
         estados={estados}
         busqueda={busqueda}
         estado={estado}
@@ -118,7 +97,12 @@ export function MisEntregas({
         onCambiarFechaDesde={setFechaDesde}
         onCambiarFechaHasta={setFechaHasta}
       />
-      <TablaEntregas entregas={entregasFiltradas} onActualizar={onActualizar} onSeleccionar={setSeleccionado} />
+      <TablaEnvios
+        vista="repartidor"
+        envios={entregasFiltradas}
+        onActualizar={onActualizar}
+        onSeleccionar={setSeleccionado}
+      />
     </section>
   )
 }

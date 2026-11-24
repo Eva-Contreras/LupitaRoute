@@ -1,4 +1,4 @@
-import { BrandName } from '../components/shared/BrandName'
+import { BrandName } from '../components/BrandName'
 import { ReceptorPanel } from '../components/receptor/ReceptorPanel'
 import { RepartidorPanel } from '../components/repartidor/RepartidorPanel'
 import { RemitentePanel } from '../components/remitente/RemitentePanel'

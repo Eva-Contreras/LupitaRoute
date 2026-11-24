@@ -1,27 +1,14 @@
 import { useEffect, useState } from 'react'
-import { rastrearEnvio } from '../../services/envios'
-import type { EnvioDetalle, EnvioRastreo } from '../../types/envio.types'
-import { claseEstado } from '../../utils/claseEstado'
+import { rastrearEnvio } from '../services/envios'
+import type { EnvioDetalle, EnvioRastreo } from '../types/envio.types'
+import { EstadoEnvioBadge } from './EstadoEnvioBadge'
+import { fechaLegible, formatoMoneda } from './formatoEnvio'
 
 interface DetalleEnvioProps {
   envio: EnvioDetalle
   onVolver: (actualizado: EnvioRastreo | null) => void
   textoVolver?: string
   onActualizar?: (actualizado: EnvioRastreo | null) => void
-}
-
-const formatoFecha = new Intl.DateTimeFormat('es-MX', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
-const formatoMoneda = new Intl.NumberFormat('es-MX', {
-  style: 'currency',
-  currency: 'MXN',
-})
-
-function fechaLegible(valor: string): string {
-  const fecha = new Date(valor)
-  return Number.isNaN(fecha.getTime()) ? '—' : formatoFecha.format(fecha)
 }
 
 export function DetalleEnvio({
@@ -108,7 +95,7 @@ export function DetalleEnvio({
           <div><dt>Costo</dt><dd>{formatoMoneda.format(detalle.costoTotal)}</dd></div>
           <div>
             <dt>Estado actual</dt>
-            <dd><span className={`status-badge status-badge--${claseEstado(detalle.estadoActual)}`}>{detalle.estadoActual}</span></dd>
+            <dd><EstadoEnvioBadge estado={detalle.estadoActual} /></dd>
           </div>
         </dl>
 

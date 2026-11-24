@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ErrorApi, obtenerEnviosDisponibles } from '../../services/envios'
 import type { EnvioDetalle } from '../../types/envio.types'
-import { claseEstado } from '../../utils/claseEstado'
+import { EstadoEnvioBadge } from '../EstadoEnvioBadge'
 
 interface EnviosDisponiblesProps {
   token: string
@@ -199,7 +199,7 @@ export function EnviosDisponibles({
                   <td>{envio.direccionOrigen}</td>
                   <td>{envio.direccionDestino}</td>
                   <td>{envio.descripcionPaquete} · {envio.pesoKg} kg</td>
-                  <td><span className={`status-badge status-badge--${claseEstado(envio.estadoActual)}`}>{envio.estadoActual}</span></td>
+                  <td><EstadoEnvioBadge estado={envio.estadoActual} /></td>
                   <td>
                     <button
                       className="shipment-action"
