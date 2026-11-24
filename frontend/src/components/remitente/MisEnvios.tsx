@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { FiltrosEnvios } from '../../components/remitente/FiltrosEnvios'
-import { NavegacionRemitente } from '../../components/remitente/NavegacionRemitente'
-import { TablaEnvios } from '../../components/remitente/TablaEnvios'
+import { FiltrosEnvios } from './FiltrosEnvios'
+import { TablaEnvios } from './TablaEnvios'
 import { enviosDemo } from '../../data/enviosDemo'
 import type { EstadoEnvio } from '../../types/envio.types'
 
-export function MisEnviosPage() {
+export function MisEnvios() {
   const [busqueda, setBusqueda] = useState('')
   const [estado, setEstado] = useState<EstadoEnvio | ''>('')
   const [fechaDesde, setFechaDesde] = useState('')
@@ -39,30 +38,26 @@ export function MisEnviosPage() {
     )
 
   return (
-    <div className="role-content sender-layout">
-      <NavegacionRemitente />
+    <section className="sender-shipments" aria-labelledby="shipments-title">
+      <header className="sender-section-header">
+        <div>
+          <h2 id="shipments-title">Mis envíos</h2>
+          <p>Consulta tus paquetes y su estado más reciente.</p>
+        </div>
+        <span className="section-caption">Datos de demostración</span>
+      </header>
 
-      <section className="sender-shipments" aria-labelledby="shipments-title">
-        <header className="sender-section-header">
-          <div>
-            <h2 id="shipments-title">Mis envíos</h2>
-            <p>Consulta tus paquetes y su estado más reciente.</p>
-          </div>
-          <span className="section-caption">Datos de demostración</span>
-        </header>
-
-        <FiltrosEnvios
-          busqueda={busqueda}
-          estado={estado}
-          fechaDesde={fechaDesde}
-          fechaHasta={fechaHasta}
-          onCambiarBusqueda={setBusqueda}
-          onCambiarEstado={setEstado}
-          onCambiarFechaDesde={setFechaDesde}
-          onCambiarFechaHasta={setFechaHasta}
-        />
-        <TablaEnvios envios={enviosFiltrados} />
-      </section>
-    </div>
+      <FiltrosEnvios
+        busqueda={busqueda}
+        estado={estado}
+        fechaDesde={fechaDesde}
+        fechaHasta={fechaHasta}
+        onCambiarBusqueda={setBusqueda}
+        onCambiarEstado={setEstado}
+        onCambiarFechaDesde={setFechaDesde}
+        onCambiarFechaHasta={setFechaHasta}
+      />
+      <TablaEnvios envios={enviosFiltrados} />
+    </section>
   )
 }

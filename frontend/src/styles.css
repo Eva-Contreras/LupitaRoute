@@ -333,6 +333,133 @@ select {
   overflow: hidden;
 }
 
+.quote-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.8fr);
+  gap: 24px;
+  padding: 22px;
+}
+
+.quote-form {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.quote-field {
+  display: grid;
+  gap: 7px;
+  color: var(--color-texto);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.quote-field input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  color: var(--color-texto);
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 9px;
+  font-size: 0.9rem;
+}
+
+.quote-field input:focus {
+  border-color: var(--color-principal);
+  outline: 3px solid var(--color-principal-foco);
+}
+
+.quote-weight-input {
+  position: relative;
+}
+
+.quote-weight-input input {
+  padding-right: 48px;
+}
+
+.quote-weight-input span {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  color: var(--color-secundario);
+  font-size: 0.85rem;
+  font-weight: 400;
+  transform: translateY(-50%);
+}
+
+.quote-submit {
+  min-height: 46px;
+  padding: 10px 16px;
+  color: var(--color-superficie);
+  background-color: var(--color-principal);
+  border: 0;
+  border-radius: 9px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.quote-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.quote-demo-note {
+  margin: -10px 0 0;
+  color: var(--color-secundario);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.quote-result {
+  align-self: start;
+  padding: 20px;
+  background:
+    linear-gradient(145deg, var(--color-principal-suave), transparent 75%),
+    var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+}
+
+.quote-result h3 {
+  margin: 0 0 8px;
+  color: var(--color-principal);
+  font-size: 1rem;
+}
+
+.quote-result > p {
+  margin: 0;
+  color: var(--color-secundario);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.quote-result-details {
+  display: grid;
+  gap: 14px;
+  margin: 20px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.quote-result-details div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quote-result-details dt {
+  color: var(--color-secundario);
+  font-size: 0.85rem;
+}
+
+.quote-result-details dd {
+  margin: 0;
+  color: var(--color-principal);
+  font-weight: 700;
+}
+
 .sender-section-header {
   display: flex;
   align-items: flex-start;
@@ -669,6 +796,11 @@ select {
 
   .sender-layout {
     grid-template-columns: 1fr;
+  }
+
+  .quote-content {
+    grid-template-columns: 1fr;
+    padding: 16px;
   }
 
   .sender-nav {

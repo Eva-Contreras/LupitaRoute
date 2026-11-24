@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { BrandName } from '../components/BrandName'
 import { ReceptorPanel } from '../components/ReceptorPanel'
 import { RepartidorPanel } from '../components/RepartidorPanel'
-import { MisEnviosPage } from './remitente/MisEnviosPage'
+import { PanelRemitente } from '../components/remitente/PanelRemitente'
 import type { RolNombre } from '../types/lupita.types'
 
 interface PanelPageProps {
@@ -59,7 +59,7 @@ export function PanelPage({ onExit }: PanelPageProps) {
           <p>Consulta y administra tus envíos desde un solo lugar.</p>
         </section>
 
-        {rol === 'Remitente' && <MisEnviosPage />}
+        {rol === 'Remitente' && <PanelRemitente />}
         {rol === 'Repartidor' && <RepartidorPanel />}
         {rol === 'Receptor' && <ReceptorPanel />}
       </main>
