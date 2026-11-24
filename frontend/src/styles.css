@@ -58,7 +58,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font-family: inherit;
 }
 
@@ -460,6 +461,57 @@ select {
   font-weight: 700;
 }
 
+.create-shipment-form {
+  display: grid;
+  gap: 24px;
+  padding: 22px;
+}
+
+.create-shipment-section {
+  display: grid;
+  gap: 16px;
+}
+
+.create-shipment-section h3 {
+  margin: 0;
+  color: var(--color-principal);
+  font-size: 1rem;
+}
+
+.create-shipment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.create-shipment-field--wide {
+  grid-column: 1 / -1;
+}
+
+.optional-label {
+  color: var(--color-secundario);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.create-shipment-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.create-shipment-footer .quote-demo-note {
+  margin: 0;
+}
+
+.create-shipment-footer .quote-submit {
+  min-width: 160px;
+  flex-shrink: 0;
+}
+
 .sender-section-header {
   display: flex;
   align-items: flex-start;
@@ -801,6 +853,23 @@ select {
   .quote-content {
     grid-template-columns: 1fr;
     padding: 16px;
+  }
+
+  .create-shipment-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .create-shipment-field--wide {
+    grid-column: auto;
+  }
+
+  .create-shipment-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .create-shipment-footer .quote-submit {
+    width: 100%;
   }
 
   .sender-nav {

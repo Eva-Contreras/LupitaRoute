@@ -1,4 +1,4 @@
-export type SeccionRemitente = 'envios' | 'cotizar'
+export type SeccionRemitente = 'envios' | 'cotizar' | 'crear'
 
 interface NavegacionRemitenteProps {
   seccionActiva: SeccionRemitente
@@ -30,13 +30,12 @@ export function NavegacionRemitente({
           Cotizar envío
         </button>
         <button
-          className="sender-nav-item"
+          className={`sender-nav-item${seccionActiva === 'crear' ? ' sender-nav-item--active' : ''}`}
           type="button"
-          disabled
-          title="Disponible próximamente"
+          aria-current={seccionActiva === 'crear' ? 'page' : undefined}
+          onClick={() => onCambiarSeccion('crear')}
         >
           Crear envío
-          <span>Próximamente</span>
         </button>
       </nav>
     </aside>
