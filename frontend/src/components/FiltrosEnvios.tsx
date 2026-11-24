@@ -1,6 +1,7 @@
-import type { EstadoPaquete } from '../../types/lupita.types'
+import type { EstadoPaquete } from '../types/envio.types'
 
-interface FiltrosEntregasProps {
+interface FiltrosEnviosProps {
+  etiqueta: string
   estados: EstadoPaquete[]
   busqueda: string
   estado: string
@@ -12,7 +13,8 @@ interface FiltrosEntregasProps {
   onCambiarFechaHasta: (value: string) => void
 }
 
-export function FiltrosEntregas({
+export function FiltrosEnvios({
+  etiqueta,
   estados,
   busqueda,
   estado,
@@ -22,9 +24,9 @@ export function FiltrosEntregas({
   onCambiarEstado,
   onCambiarFechaDesde,
   onCambiarFechaHasta,
-}: FiltrosEntregasProps) {
+}: FiltrosEnviosProps) {
   return (
-    <div className="shipment-filters" aria-label="Filtros de entregas">
+    <div className="shipment-filters" aria-label={etiqueta}>
       <label className="shipment-filter shipment-filter--search">
         <span>Buscar</span>
         <input

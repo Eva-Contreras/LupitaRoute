@@ -2,7 +2,7 @@ import { BrandName } from '../components/BrandName'
 import { ReceptorPanel } from '../components/receptor/ReceptorPanel'
 import { RepartidorPanel } from '../components/repartidor/RepartidorPanel'
 import { RemitentePanel } from '../components/remitente/RemitentePanel'
-import type { Usuario } from '../types/lupita.types'
+import type { Usuario } from '../types/auth.types'
 
 interface PanelPageProps {
   usuario: Usuario

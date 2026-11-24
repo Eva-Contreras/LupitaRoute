@@ -58,6 +58,30 @@ archivos.
 El inicio de sesión envía `correo` y `password` a `POST /api/Auth/login`. La
 sesión se mantiene solo en memoria y se limpia al cerrar sesión.
 
+Desde el inicio de sesión se puede crear una cuenta de receptor. El frontend
+envía nombre, correo, contraseña, teléfono opcional y `rolId: 3` a
+`POST /api/Auth/register`; después se puede iniciar sesión. El frontend no puede
+garantizar que el registro público se limite a receptores: esa restricción debe
+validarse también en el backend.
+
+En “Mis envíos”, el código de cada envío abre su detalle. El historial se
+consulta mediante `GET /api/Envios/rastreo/{codigo}`, un endpoint público del
+backend actual. Se puede volver a la lista conservando los filtros y copiar
+el código de rastreo.
+
+El repartidor puede consultar el detalle y el historial de sus entregas, acceder
+desde ahí a la actualización de estado y recargar la lista. La sección “Envíos
+disponibles” consulta `GET /api/Envios/disponibles` y permite confirmar la
+recolección. El frontend obtiene el identificador de Recolectado del catálogo,
+actualiza el estado y vuelve a consultar “Mis entregas”. La asignación la realiza
+el procedimiento del backend; el frontend no puede evitar asignaciones
+simultáneas.
+
+Los componentes reutilizados por varios roles están en la raíz de
+`src/components`; las carpetas `remitente`, `repartidor` y `receptor` contienen
+las vistas específicas de cada rol. La tabla y los filtros compartidos
+conservan las columnas y acciones correspondientes a cada vista.
+
 ## Comandos
 
 - `npm run dev`: inicia el servidor local de Vite.

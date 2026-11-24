@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { cotizarEnvio } from '../../services/envios'
-import type { CotizarResponse } from '../../types/lupita.types'
+import type { CotizarResponse } from '../../types/envio.types'
 
 const formatoMoneda = new Intl.NumberFormat('es-MX', {
   style: 'currency',

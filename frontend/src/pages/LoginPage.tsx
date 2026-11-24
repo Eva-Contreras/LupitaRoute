@@ -1,13 +1,15 @@
 import { useState, type FormEvent } from 'react'
 import { BrandName } from '../components/BrandName'
 import { login } from '../services/auth'
-import type { AuthResponse } from '../types/lupita.types'
+import type { AuthResponse } from '../types/auth.types'
 
 interface LoginPageProps {
   onAccept: (session: AuthResponse) => void
+  onCrearCuenta: () => void
+  registroCompletado: boolean
 }
 
-export function LoginPage({ onAccept }: LoginPageProps) {
+export function LoginPage({ onAccept, onCrearCuenta, registroCompletado }: LoginPageProps) {
   const [correo, setCorreo] = useState('')
   const [password, setPassword] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -65,6 +67,11 @@ export function LoginPage({ onAccept }: LoginPageProps) {
             onChange={(event) => setPassword(event.currentTarget.value)}
           />
         </div>
+        {registroCompletado && (
+          <p className="login-success" role="status">
+            Cuenta creada. Ya puedes iniciar sesión.
+          </p>
+        )}
         {error && (
           <p className="login-error" role="alert">
             {error}
@@ -73,6 +80,12 @@ export function LoginPage({ onAccept }: LoginPageProps) {
         <button className="login-button" type="submit" disabled={cargando}>
           {cargando ? 'Iniciando sesión…' : 'Iniciar sesión'}
         </button>
+        <p className="login-switch">
+          ¿No tienes cuenta?{' '}
+          <button type="button" onClick={onCrearCuenta} disabled={cargando}>
+            Crea una cuenta de receptor
+          </button>
+        </p>
       </form>
     </main>
   )

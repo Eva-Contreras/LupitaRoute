@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { ActualizarEstado } from './ActualizarEstado'
+import { EnviosDisponibles } from './EnviosDisponibles'
 import { MisEntregas } from './MisEntregas'
 import { NavegacionRepartidor } from './NavegacionRepartidor'
 import type { SeccionRepartidor } from './NavegacionRepartidor'
-import { useEntregas } from './useEntregas'
+import { useEntregas } from '../../hooks/useEntregas'
+import { actualizarEstado, obtenerEstados } from '../../services/envios'
 
 interface RepartidorPanelProps {
   token: string
@@ -18,7 +20,9 @@ export function RepartidorPanel({
   const [envioSeleccionado, setEnvioSeleccionado] = useState<number | null>(
     null,
   )
-  const { envios, estados, cargando, error, reintentar, cambiarEstado } =
+  const [registrando, setRegistrando] = useState(false)
+  const [recoleccion, setRecoleccion] = useState<{ envioId: number; codigo: string } | null>(null)
+  const { envios, estados, cargando, error, reintentar, cambiarEstado, actualizarEnLista } =
     useEntregas(token)
 
   function irAActualizar(envioId: number) {
@@ -26,8 +30,36 @@ export function RepartidorPanel({
     setSeccion('actualizar')
   }
 
+  async function registrarRecoleccion(envioId: number, codigo: string) {
+    setRegistrando(true)
+    try {
+      const catalogo = await obtenerEstados()
+      const recolectados = catalogo.filter(
+        (estado) => estado.nombre.trim().toLocaleLowerCase('es-MX') === 'recolectado',
+      )
+      if (recolectados.length !== 1) {
+        throw new Error('No se pudo identificar el estado Recolectado en el catálogo.')
+      }
+      await actualizarEstado(token, envioId, recolectados[0].estadoId, null)
+      setRecoleccion({ envioId, codigo })
+      reintentar()
+      setSeccion('entregas')
+    } finally {
+      setRegistrando(false)
+    }
+  }
+
   let contenido
-  if (cargando) {
+  if (seccion === 'disponibles') {
+    contenido = (
+      <EnviosDisponibles
+        token={token}
+        onSesionExpirada={onSesionExpirada}
+        onRecolectar={registrarRecoleccion}
+        registrando={registrando}
+      />
+    )
+  } else if (cargando) {
     contenido = (
       <section className="sender-shipments panel-state" role="status">
         <p>Cargando tus entregas…</p>
@@ -37,6 +69,9 @@ export function RepartidorPanel({
     contenido = (
       <section className="sender-shipments panel-state" role="alert">
         <p className="panel-state__error">{error.mensaje}</p>
+        {recoleccion && seccion === 'entregas' && (
+          <p>La API aceptó la recolección de {recoleccion.codigo}, pero no se pudo actualizar la lista.</p>
+        )}
         {error.sesionExpirada ? (
           <button
             className="shipment-action"
@@ -58,6 +93,9 @@ export function RepartidorPanel({
         entregas={envios}
         estados={estados}
         onActualizar={irAActualizar}
+        onActualizarLista={actualizarEnLista}
+        onRecargar={reintentar}
+        recoleccion={recoleccion}
       />
     )
   } else {
@@ -77,6 +115,7 @@ export function RepartidorPanel({
       <NavegacionRepartidor
         seccionActiva={seccion}
         onCambiarSeccion={setSeccion}
+        deshabilitada={registrando}
       />
       {contenido}
     </div>

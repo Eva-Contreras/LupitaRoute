@@ -1,4 +1,4 @@
-import type { AuthResponse, RolNombre, Usuario } from '../types/lupita.types'
+import type { AuthResponse, RolNombre, Usuario } from '../types/auth.types'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null) {
@@ -83,4 +83,55 @@ export async function login(correo: string, password: string): Promise<AuthRespo
   }
 
   return authResponse
+}
+
+interface RegistroReceptor {
+  nombreCompleto: string
+  correo: string
+  password: string
+  telefono?: string
+}
+
+export async function registrarReceptor(datos: RegistroReceptor): Promise<void> {
+  const apiUrl = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '')
+  if (!apiUrl) {
+    throw new Error('Falta configurar VITE_API_URL para conectar con la API.')
+  }
+
+  let response: Response
+  try {
+    response = await fetch(`${apiUrl}/api/Auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...datos, rolId: 3 }),
+    })
+  } catch {
+    throw new Error('No se pudo conectar con la API. Verifica que esté disponible.')
+  }
+
+  if (!response.ok) {
+    let payload: unknown
+    try {
+      payload = await response.json()
+    } catch {
+      throw new Error(`No fue posible crear la cuenta (HTTP ${response.status}).`)
+    }
+
+    if (isRecord(payload)) {
+      if (typeof payload.mensaje === 'string' && payload.mensaje) {
+        throw new Error(payload.mensaje)
+      }
+      if (isRecord(payload.errors)) {
+        for (const mensajes of Object.values(payload.errors)) {
+          if (Array.isArray(mensajes)) {
+            const mensaje = mensajes.find((valor) => typeof valor === 'string' && valor)
+            if (typeof mensaje === 'string') {
+              throw new Error(mensaje)
+            }
+          }
+        }
+      }
+    }
+    throw new Error(`No fue posible crear la cuenta (HTTP ${response.status}).`)
+  }
 }

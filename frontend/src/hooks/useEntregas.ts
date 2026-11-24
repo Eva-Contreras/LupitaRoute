@@ -1,15 +1,11 @@
 import { useEffect, useState } from 'react'
 import {
-  crearEnvio,
+  actualizarEstado,
   ErrorApi,
   obtenerEstados,
   obtenerMisEnvios,
-} from '../../services/envios'
-import type {
-  EnvioDetalle,
-  EstadoPaquete,
-  NuevoEnvioRequest,
-} from '../../types/lupita.types'
+} from '../services/envios'
+import type { EnvioDetalle, EstadoPaquete } from '../types/envio.types'
 
 export interface ErrorVista {
   mensaje: string
@@ -23,7 +19,7 @@ function aErrorVista(error: unknown): ErrorVista {
   return { mensaje: 'Ocurrió un error inesperado.', sesionExpirada: false }
 }
 
-export function useEnvios(token: string) {
+export function useEntregas(token: string) {
   const [envios, setEnvios] = useState<EnvioDetalle[]>([])
   const [estados, setEstados] = useState<EstadoPaquete[]>([])
   const [cargando, setCargando] = useState(true)
@@ -58,14 +54,28 @@ export function useEnvios(token: string) {
     setIntento((actual) => actual + 1)
   }
 
-  async function crear(solicitud: NuevoEnvioRequest): Promise<EnvioDetalle> {
-    const envio = await crearEnvio(token, solicitud)
-    setEnvios((actuales) => [
-      envio,
-      ...actuales.filter((actual) => actual.envioId !== envio.envioId),
-    ])
-    return envio
+  async function cambiarEstado(
+    envioId: number,
+    estadoId: number,
+    comentario: string,
+  ) {
+    await actualizarEstado(token, envioId, estadoId, comentario || null)
+    const nombre =
+      estados.find((estado) => estado.estadoId === estadoId)?.nombre ?? ''
+    setEnvios((actuales) =>
+      actuales.map((envio) =>
+        envio.envioId === envioId
+          ? { ...envio, estadoActualId: estadoId, estadoActual: nombre }
+          : envio,
+      ),
+    )
   }
 
-  return { envios, estados, cargando, error, reintentar, crear }
+  function actualizarEnLista(envio: EnvioDetalle) {
+    setEnvios((actuales) =>
+      actuales.map((actual) => actual.envioId === envio.envioId ? envio : actual),
+    )
+  }
+
+  return { envios, estados, cargando, error, reintentar, cambiarEstado, actualizarEnLista }
 }

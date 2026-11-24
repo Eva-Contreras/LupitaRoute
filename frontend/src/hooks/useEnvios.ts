@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import {
-  actualizarEstado,
+  crearEnvio,
   ErrorApi,
   obtenerEstados,
   obtenerMisEnvios,
-} from '../../services/envios'
-import type { EnvioDetalle, EstadoPaquete } from '../../types/lupita.types'
+} from '../services/envios'
+import type { EnvioDetalle, EstadoPaquete, NuevoEnvioRequest } from '../types/envio.types'
 
 export interface ErrorVista {
   mensaje: string
@@ -19,7 +19,7 @@ function aErrorVista(error: unknown): ErrorVista {
   return { mensaje: 'Ocurrió un error inesperado.', sesionExpirada: false }
 }
 
-export function useEntregas(token: string) {
+export function useEnvios(token: string) {
   const [envios, setEnvios] = useState<EnvioDetalle[]>([])
   const [estados, setEstados] = useState<EstadoPaquete[]>([])
   const [cargando, setCargando] = useState(true)
@@ -54,22 +54,20 @@ export function useEntregas(token: string) {
     setIntento((actual) => actual + 1)
   }
 
-  async function cambiarEstado(
-    envioId: number,
-    estadoId: number,
-    comentario: string,
-  ) {
-    await actualizarEstado(token, envioId, estadoId, comentario || null)
-    const nombre =
-      estados.find((estado) => estado.estadoId === estadoId)?.nombre ?? ''
+  async function crear(solicitud: NuevoEnvioRequest): Promise<EnvioDetalle> {
+    const envio = await crearEnvio(token, solicitud)
+    setEnvios((actuales) => [
+      envio,
+      ...actuales.filter((actual) => actual.envioId !== envio.envioId),
+    ])
+    return envio
+  }
+
+  function actualizarEnLista(envio: EnvioDetalle) {
     setEnvios((actuales) =>
-      actuales.map((envio) =>
-        envio.envioId === envioId
-          ? { ...envio, estadoActualId: estadoId, estadoActual: nombre }
-          : envio,
-      ),
+      actuales.map((actual) => actual.envioId === envio.envioId ? envio : actual),
     )
   }
 
-  return { envios, estados, cargando, error, reintentar, cambiarEstado }
+  return { envios, estados, cargando, error, reintentar, crear, actualizarEnLista }
 }

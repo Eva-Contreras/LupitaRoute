@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import type { EnvioDetalle, NuevoEnvioRequest } from '../../types/lupita.types'
+import type { EnvioDetalle, NuevoEnvioRequest } from '../../types/envio.types'
 
 interface CrearEnvioProps {
   onCrear: (solicitud: NuevoEnvioRequest) => Promise<EnvioDetalle>

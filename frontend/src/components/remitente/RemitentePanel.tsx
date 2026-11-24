@@ -4,7 +4,7 @@ import { CrearEnvio } from './CrearEnvio'
 import { MisEnvios } from './MisEnvios'
 import { NavegacionRemitente } from './NavegacionRemitente'
 import type { SeccionRemitente } from './NavegacionRemitente'
-import { useEnvios } from './useEnvios'
+import { useEnvios } from '../../hooks/useEnvios'
 
 interface RemitentePanelProps {
   token: string
@@ -16,7 +16,7 @@ export function RemitentePanel({
   onSesionExpirada,
 }: RemitentePanelProps) {
   const [seccion, setSeccion] = useState<SeccionRemitente>('envios')
-  const { envios, estados, cargando, error, reintentar, crear } =
+  const { envios, estados, cargando, error, reintentar, crear, actualizarEnLista } =
     useEnvios(token)
 
   let contenido
@@ -50,7 +50,7 @@ export function RemitentePanel({
       </section>
     )
   } else {
-    contenido = <MisEnvios envios={envios} estados={estados} />
+    contenido = <MisEnvios envios={envios} estados={estados} onActualizar={actualizarEnLista} />
   }
 
   return (
