@@ -58,6 +58,12 @@ archivos.
 El inicio de sesión envía `correo` y `password` a `POST /api/Auth/login`. La
 sesión se mantiene solo en memoria y se limpia al cerrar sesión.
 
+Desde el inicio de sesión se puede crear una cuenta de receptor. El frontend
+envía nombre, correo, contraseña, teléfono opcional y `rolId: 3` a
+`POST /api/Auth/register`; después se puede iniciar sesión. El frontend no puede
+garantizar que el registro público se limite a receptores: esa restricción debe
+validarse también en el backend.
+
 ## Comandos
 
 - `npm run dev`: inicia el servidor local de Vite.

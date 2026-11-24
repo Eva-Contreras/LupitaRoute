@@ -178,6 +178,45 @@ textarea {
   line-height: 1.5;
 }
 
+.login-success {
+  margin: 0 0 16px;
+  color: var(--estado-entregado-texto);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.login-field small {
+  color: var(--color-secundario);
+}
+
+.login-switch {
+  margin: 20px 0 0;
+  text-align: center;
+  color: var(--color-secundario);
+  font-size: 0.9rem;
+}
+
+.login-switch button {
+  padding: 0;
+  color: var(--color-principal);
+  background: none;
+  border: 0;
+  font-size: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.login-switch button:focus-visible {
+  outline: 3px solid var(--color-principal-anillo);
+  outline-offset: 3px;
+}
+
+.login-switch button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .dashboard-page {
   min-height: 100vh;
 }
