@@ -64,9 +64,9 @@ public class EnvioService : IEnvioService
             ?? throw new Exception("Error al recuperar el envío recién creado.");
     }
 
-    public async Task ActualizarEstadoAsync(int envioId, int usuarioCambioId, ActualizarEstadoRequestDto dto)
+    public async Task ActualizarEstadoAsync(int envioId, int usuarioCambioId, string rolUsuario, ActualizarEstadoRequestDto dto)
     {
-        await _envioRepository.ActualizarEstadoAsync(envioId, dto.NuevoEstadoId, usuarioCambioId, dto.Comentario);
+        await _envioRepository.ActualizarEstadoAsync(envioId, dto.NuevoEstadoId, usuarioCambioId, rolUsuario, dto.Comentario);
     }
 
     public async Task<EnvioDetalleDto?> RastrearAsync(string codigoRastreo)

@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using LupitaRoute.Api.DTOs;
 using LupitaRoute.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LupitaRoute.Api.Controllers;
@@ -37,5 +39,17 @@ public class AuthController : ControllerBase
             return Unauthorized(new { mensaje = "Correo o contraseña incorrectos." });
 
         return Ok(resultado);
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> ObtenerPerfil()
+    {
+        int usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var perfil = await _authService.ObtenerPerfilAsync(usuarioId);
+        if (perfil == null)
+            return NotFound(new { mensaje = "Usuario no encontrado." });
+
+        return Ok(perfil);
     }
 }

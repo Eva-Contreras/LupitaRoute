@@ -50,6 +50,22 @@ public class AuthService : IAuthService
         return GenerarRespuestaAuth(usuario);
     }
 
+    public async Task<UsuarioResponseDto?> ObtenerPerfilAsync(int usuarioId)
+    {
+        var usuario = await _authRepository.ObtenerPorIdAsync(usuarioId);
+        if (usuario == null) return null;
+
+        return new UsuarioResponseDto
+        {
+            UsuarioId = usuario.UsuarioId,
+            NombreCompleto = usuario.NombreCompleto,
+            Correo = usuario.Correo,
+            Telefono = usuario.Telefono,
+            RolId = usuario.RolId,
+            Rol = usuario.RolNombre
+        };
+    }
+
     private AuthResponseDto GenerarRespuestaAuth(Usuario usuario)
     {
         var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("Falta Jwt:Key.");

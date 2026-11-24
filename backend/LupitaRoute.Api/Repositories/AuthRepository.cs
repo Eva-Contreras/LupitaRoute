@@ -25,6 +25,16 @@ public class AuthRepository : IAuthRepository
         );
     }
 
+    public async Task<Usuario?> ObtenerPorIdAsync(int usuarioId)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        return await connection.QueryFirstOrDefaultAsync<Usuario>(
+            "sp_ObtenerUsuarioPorId",
+            new { UsuarioId = usuarioId },
+            commandType: CommandType.StoredProcedure
+        );
+    }
+
     public async Task<int> RegistrarUsuarioAsync(Usuario usuario)
     {
         using var connection = new SqlConnection(_connectionString);

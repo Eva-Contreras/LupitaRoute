@@ -3,6 +3,7 @@ using LupitaRoute.Api.DTOs;
 using LupitaRoute.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 
 namespace LupitaRoute.Api.Controllers;
 
@@ -87,8 +88,17 @@ public class EnviosController : ControllerBase
     [HttpPut("{envioId:int}/estado")]
     public async Task<IActionResult> ActualizarEstado(int envioId, [FromBody] ActualizarEstadoRequestDto dto)
     {
-        int usuarioCambioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        await _envioService.ActualizarEstadoAsync(envioId, usuarioCambioId, dto);
-        return Ok(new { mensaje = "Estado actualizado correctamente." });
+        try
+        {
+            int usuarioCambioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            string rol = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+
+            await _envioService.ActualizarEstadoAsync(envioId, usuarioCambioId, rol, dto);
+            return Ok(new { mensaje = "Estado actualizado correctamente." });
+        }
+        catch (SqlException ex) when (ex.Number >= 50000)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
     }
 }
