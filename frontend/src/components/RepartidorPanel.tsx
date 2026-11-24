@@ -27,7 +27,9 @@ export function RepartidorPanel() {
               <h3>Entrega a Ana García</h3>
               <p>Av. Universidad 1200, Centro</p>
             </div>
-            <span className="status-badge">En reparto</span>
+            <span className="status-badge status-badge--en-reparto">
+              En reparto
+            </span>
           </article>
           <article className="delivery-card">
             <div>

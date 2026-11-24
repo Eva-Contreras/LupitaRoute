@@ -29,7 +29,9 @@ export function ReceptorPanel() {
             <h3>Tu paquete está en camino</h3>
             <p>Última actualización: hoy, 10:30 a. m.</p>
           </div>
-          <span className="status-badge">En tránsito</span>
+          <span className="status-badge status-badge--en-transito">
+            En tránsito
+          </span>
         </article>
       </section>
     </div>
