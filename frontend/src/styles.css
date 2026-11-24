@@ -921,3 +921,87 @@ textarea {
   }
 }
 
+
+/* Vista de repartidor */
+.courier-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0 22px 20px;
+}
+
+.courier-metrics .metric-card {
+  gap: 8px;
+  padding: 14px 16px;
+  background-color: var(--color-fondo);
+  box-shadow: none;
+}
+
+.courier-metrics .metric-card span {
+  font-size: 0.8rem;
+}
+
+.courier-metrics .metric-card strong {
+  font-size: 1.6rem;
+}
+
+.quote-field select,
+.quote-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  color: var(--color-texto);
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 9px;
+  font-size: 0.9rem;
+}
+
+.quote-field select {
+  min-height: 46px;
+}
+
+.quote-field textarea {
+  resize: vertical;
+}
+
+.quote-field select:focus,
+.quote-field textarea:focus {
+  border-color: var(--color-principal);
+  outline: 3px solid var(--color-principal-foco);
+}
+
+.quote-field input[readonly] {
+  color: var(--color-secundario);
+  background-color: var(--color-fondo);
+}
+
+.quote-submit:not(:disabled) {
+  cursor: pointer;
+}
+
+.quote-submit:not(:disabled):hover {
+  background-color: var(--color-acento);
+}
+
+.shipment-action {
+  padding: 6px 12px;
+  color: var(--color-principal);
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shipment-action:hover {
+  border-color: var(--color-principal);
+  background-color: var(--color-principal-suave);
+}
+
+@media (max-width: 480px) {
+  .courier-metrics {
+    grid-template-columns: 1fr;
+    padding: 0 16px 16px;
+  }
+}

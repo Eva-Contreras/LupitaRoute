@@ -21,3 +21,18 @@ export interface EnvioDemostracion {
 export function esEstadoEnvio(value: string): value is EstadoEnvio {
   return ESTADOS_ENVIO.some((estado) => estado === value)
 }
+
+export interface EntregaDemostracion extends EnvioDemostracion {
+  direccion: string
+  comentario?: string
+  ubicacionActual?: string
+}
+
+export const clasesPorEstado: Record<EstadoEnvio, string> = {
+  Creado: 'creado',
+  Recolectado: 'recolectado',
+  'En tránsito': 'en-transito',
+  'En reparto': 'en-reparto',
+  Entregado: 'entregado',
+  Incidencia: 'incidencia',
+}
