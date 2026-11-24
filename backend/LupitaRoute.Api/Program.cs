@@ -47,6 +47,9 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+builder.Services.AddScoped<IEnvioRepository, EnvioRepository>();
+builder.Services.AddScoped<IEnvioService, EnvioService>();
+
 var app = builder.Build();
 
 // 5. Pipeline HTTP
@@ -59,7 +62,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("PermitirFrontend");
 
-// El orden aquí es crítico: primero Authentication, luego Authorization
+// primero Authentication, luego Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
