@@ -1,7 +1,7 @@
 import { BrandName } from '../components/BrandName'
-import { ReceptorPanel } from '../components/ReceptorPanel'
-import { RepartidorPanel } from '../components/RepartidorPanel'
-import { PanelRemitente } from '../components/remitente/PanelRemitente'
+import { ReceptorPanel } from '../components/receptor/ReceptorPanel'
+import { RepartidorPanel } from '../components/repartidor/RepartidorPanel'
+import { RemitentePanel } from '../components/remitente/RemitentePanel'
 import type { Usuario } from '../types/lupita.types'
 
 interface PanelPageProps {
@@ -32,7 +32,7 @@ export function PanelPage({ usuario, onExit }: PanelPageProps) {
           <p>Consulta y administra tus envíos desde un solo lugar.</p>
         </section>
 
-        {rol === 'Remitente' && <PanelRemitente />}
+        {rol === 'Remitente' && <RemitentePanel />}
         {rol === 'Repartidor' && <RepartidorPanel />}
         {rol === 'Receptor' && <ReceptorPanel />}
       </main>
