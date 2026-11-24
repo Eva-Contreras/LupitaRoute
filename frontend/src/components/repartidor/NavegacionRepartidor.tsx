@@ -5,30 +5,28 @@ interface NavegacionRepartidorProps {
   onCambiarSeccion: (seccion: SeccionRepartidor) => void
 }
 
-const OPCIONES: { id: SeccionRepartidor; etiqueta: string }[] = [
-  { id: 'entregas', etiqueta: 'Mis entregas' },
-  { id: 'actualizar', etiqueta: 'Actualizar estado' },
-]
-
 export function NavegacionRepartidor({
   seccionActiva,
   onCambiarSeccion,
 }: NavegacionRepartidorProps) {
   return (
     <aside className="sender-sidebar" aria-label="Navegación de repartidor">
-      <h2>Reparto</h2>
+      <h2>Entregas</h2>
       <nav className="sender-nav">
-        {OPCIONES.map((opcion) => (
-          <button
-            key={opcion.id}
-            className={`sender-nav-item${seccionActiva === opcion.id ? ' sender-nav-item--active' : ''}`}
-            type="button"
-            aria-current={seccionActiva === opcion.id ? 'page' : undefined}
-            onClick={() => onCambiarSeccion(opcion.id)}
-          >
-            {opcion.etiqueta}
-          </button>
-        ))}
+        <button
+          className={`sender-nav-item${seccionActiva === 'entregas' ? ' sender-nav-item--active' : ''}`}
+          type="button"
+          onClick={() => onCambiarSeccion('entregas')}
+        >
+          Mis entregas
+        </button>
+        <button
+          className={`sender-nav-item${seccionActiva === 'actualizar' ? ' sender-nav-item--active' : ''}`}
+          type="button"
+          onClick={() => onCambiarSeccion('actualizar')}
+        >
+          Actualizar estado
+        </button>
       </nav>
     </aside>
   )

@@ -11,6 +11,7 @@ export default function App() {
       {session ? (
         <PanelPage
           usuario={session.usuario}
+          token={session.token}
           onExit={() => setSession(null)}
         />
       ) : (

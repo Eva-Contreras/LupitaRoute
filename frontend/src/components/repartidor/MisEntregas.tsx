@@ -1,16 +1,21 @@
 import { useState } from 'react'
-import { FiltrosEnvios } from '../remitente/FiltrosEnvios'
+import { FiltrosEntregas } from './FiltrosEntregas'
 import { TablaEntregas } from './TablaEntregas'
-import type { EntregaDemostracion, EstadoEnvio } from '../../types/envio.types'
+import type { EnvioDetalle, EstadoPaquete } from '../../types/lupita.types'
 
 interface MisEntregasProps {
-  entregas: EntregaDemostracion[]
-  onActualizar: (codigo: string) => void
+  entregas: EnvioDetalle[]
+  estados: EstadoPaquete[]
+  onActualizar: (envioId: number) => void
 }
 
-export function MisEntregas({ entregas, onActualizar }: MisEntregasProps) {
+export function MisEntregas({
+  entregas,
+  estados,
+  onActualizar,
+}: MisEntregasProps) {
   const [busqueda, setBusqueda] = useState('')
-  const [estado, setEstado] = useState<EstadoEnvio | ''>('')
+  const [estado, setEstado] = useState('')
   const [fechaDesde, setFechaDesde] = useState('')
   const [fechaHasta, setFechaHasta] = useState('')
 
@@ -19,14 +24,12 @@ export function MisEntregas({ entregas, onActualizar }: MisEntregasProps) {
     .filter((entrega) => {
       const coincideBusqueda =
         termino.length === 0 ||
-        entrega.codigo.toLocaleLowerCase().includes(termino) ||
-        entrega.destinatario.toLocaleLowerCase().includes(termino)
-      const fechaActualizacion = entrega.ultimaActualizacion.slice(0, 10)
-      const coincideEstado = estado === '' || entrega.estado === estado
-      const coincideFechaDesde =
-        fechaDesde === '' || fechaActualizacion >= fechaDesde
-      const coincideFechaHasta =
-        fechaHasta === '' || fechaActualizacion <= fechaHasta
+        entrega.codigoRastreo.toLocaleLowerCase().includes(termino) ||
+        entrega.receptor.toLocaleLowerCase().includes(termino)
+      const fechaCreacion = entrega.fechaCreacion.slice(0, 10)
+      const coincideEstado = estado === '' || entrega.estadoActual === estado
+      const coincideFechaDesde = fechaDesde === '' || fechaCreacion >= fechaDesde
+      const coincideFechaHasta = fechaHasta === '' || fechaCreacion <= fechaHasta
 
       return (
         coincideBusqueda &&
@@ -37,12 +40,12 @@ export function MisEntregas({ entregas, onActualizar }: MisEntregasProps) {
     })
     .sort(
       (a, b) =>
-        new Date(b.ultimaActualizacion).getTime() -
-        new Date(a.ultimaActualizacion).getTime(),
+        (new Date(b.fechaCreacion).getTime() || 0) -
+        (new Date(a.fechaCreacion).getTime() || 0),
     )
 
-  const enReparto = entregas.filter((e) => e.estado === 'En reparto').length
-  const entregadas = entregas.filter((e) => e.estado === 'Entregado').length
+  const enReparto = entregas.filter((e) => e.estadoActual === 'En reparto').length
+  const entregadas = entregas.filter((e) => e.estadoActual === 'Entregado').length
 
   return (
     <section className="sender-shipments" aria-labelledby="deliveries-title">
@@ -51,7 +54,6 @@ export function MisEntregas({ entregas, onActualizar }: MisEntregasProps) {
           <h2 id="deliveries-title">Mis entregas</h2>
           <p>Revisa los paquetes asignados a ti y actualiza su estado.</p>
         </div>
-        <span className="section-caption">Datos de demostración</span>
       </header>
 
       <div className="courier-metrics">
@@ -69,7 +71,8 @@ export function MisEntregas({ entregas, onActualizar }: MisEntregasProps) {
         </article>
       </div>
 
-      <FiltrosEnvios
+      <FiltrosEntregas
+        estados={estados}
         busqueda={busqueda}
         estado={estado}
         fechaDesde={fechaDesde}
@@ -79,10 +82,7 @@ export function MisEntregas({ entregas, onActualizar }: MisEntregasProps) {
         onCambiarFechaDesde={setFechaDesde}
         onCambiarFechaHasta={setFechaHasta}
       />
-      <TablaEntregas
-        entregas={entregasFiltradas}
-        onActualizar={onActualizar}
-      />
+      <TablaEntregas entregas={entregasFiltradas} onActualizar={onActualizar} />
     </section>
   )
 }

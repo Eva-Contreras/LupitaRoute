@@ -1,15 +1,20 @@
-import { clasesPorEstado } from '../../types/envio.types'
-import type { EntregaDemostracion } from '../../types/envio.types'
+import { claseEstado } from './claseEstado'
+import type { EnvioDetalle } from '../../types/lupita.types'
 
 interface TablaEntregasProps {
-  entregas: EntregaDemostracion[]
-  onActualizar: (codigo: string) => void
+  entregas: EnvioDetalle[]
+  onActualizar: (envioId: number) => void
 }
 
 const formatoFecha = new Intl.DateTimeFormat('es-MX', {
   dateStyle: 'medium',
   timeStyle: 'short',
 })
+
+function fechaLegible(valor: string): string {
+  const fecha = new Date(valor)
+  return Number.isNaN(fecha.getTime()) ? '—' : formatoFecha.format(fecha)
+}
 
 export function TablaEntregas({ entregas, onActualizar }: TablaEntregasProps) {
   return (
@@ -18,9 +23,10 @@ export function TablaEntregas({ entregas, onActualizar }: TablaEntregasProps) {
         <thead>
           <tr>
             <th scope="col">Código</th>
-            <th scope="col">Destinatario</th>
+            <th scope="col">Receptor</th>
             <th scope="col">Dirección de entrega</th>
-            <th scope="col">Última actualización</th>
+            <th scope="col">Paquete</th>
+            <th scope="col">Creado</th>
             <th scope="col">Estado</th>
             <th scope="col">
               <span className="visually-hidden">Acciones</span>
@@ -29,25 +35,26 @@ export function TablaEntregas({ entregas, onActualizar }: TablaEntregasProps) {
         </thead>
         <tbody>
           {entregas.map((entrega) => (
-            <tr key={entrega.codigo}>
-              <td className="shipment-code">{entrega.codigo}</td>
-              <td>{entrega.destinatario}</td>
-              <td>{entrega.direccion}</td>
+            <tr key={entrega.envioId}>
+              <td className="shipment-code">{entrega.codigoRastreo}</td>
+              <td>{entrega.receptor}</td>
+              <td>{entrega.direccionDestino}</td>
               <td>
-                {formatoFecha.format(new Date(entrega.ultimaActualizacion))}
+                {entrega.descripcionPaquete} · {entrega.pesoKg} kg
               </td>
+              <td>{fechaLegible(entrega.fechaCreacion)}</td>
               <td>
                 <span
-                  className={`status-badge status-badge--${clasesPorEstado[entrega.estado]}`}
+                  className={`status-badge status-badge--${claseEstado(entrega.estadoActual)}`}
                 >
-                  {entrega.estado}
+                  {entrega.estadoActual}
                 </span>
               </td>
               <td>
                 <button
                   className="shipment-action"
                   type="button"
-                  onClick={() => onActualizar(entrega.codigo)}
+                  onClick={() => onActualizar(entrega.envioId)}
                 >
                   Actualizar
                 </button>
@@ -56,7 +63,7 @@ export function TablaEntregas({ entregas, onActualizar }: TablaEntregasProps) {
           ))}
           {entregas.length === 0 && (
             <tr>
-              <td className="shipment-empty" colSpan={6}>
+              <td className="shipment-empty" colSpan={7}>
                 No hay entregas que coincidan con los filtros.
               </td>
             </tr>

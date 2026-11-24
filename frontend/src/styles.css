@@ -1005,3 +1005,32 @@ textarea {
     padding: 0 16px 16px;
   }
 }
+
+/* Repartidor conectado a la API */
+:root {
+  --estado-cancelado-texto: #57534e;
+  --estado-cancelado-fondo: #e7e5e4;
+}
+
+.status-badge.status-badge--cancelado {
+  color: var(--estado-cancelado-texto);
+  background-color: var(--estado-cancelado-fondo);
+}
+
+.panel-state {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 48px 22px;
+  color: var(--color-secundario);
+  text-align: center;
+}
+
+.panel-state p {
+  margin: 0;
+}
+
+.panel-state__error,
+.form-message--error {
+  color: var(--estado-incidencia-texto);
+}
