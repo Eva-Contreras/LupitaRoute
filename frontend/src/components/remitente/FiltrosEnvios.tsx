@@ -1,4 +1,4 @@
-import type { EstadoPaquete } from '../../types/lupita.types'
+import type { EstadoPaquete } from '../../types/envio.types'
 
 interface FiltrosEnviosProps {
   estados: EstadoPaquete[]

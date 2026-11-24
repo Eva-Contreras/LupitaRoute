@@ -3,7 +3,7 @@ import { ActualizarEstado } from './ActualizarEstado'
 import { MisEntregas } from './MisEntregas'
 import { NavegacionRepartidor } from './NavegacionRepartidor'
 import type { SeccionRepartidor } from './NavegacionRepartidor'
-import { useEntregas } from './useEntregas'
+import { useEntregas } from '../../hooks/useEntregas'
 
 interface RepartidorPanelProps {
   token: string

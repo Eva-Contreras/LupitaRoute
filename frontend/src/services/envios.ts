@@ -1,10 +1,4 @@
-import type {
-  CotizarRequest,
-  CotizarResponse,
-  EnvioDetalle,
-  EstadoPaquete,
-  NuevoEnvioRequest,
-} from '../types/lupita.types'
+import type { CotizarRequest, CotizarResponse, EnvioDetalle, EstadoPaquete, NuevoEnvioRequest } from '../types/envio.types'
 
 export class ErrorApi extends Error {
   readonly estado: number | null

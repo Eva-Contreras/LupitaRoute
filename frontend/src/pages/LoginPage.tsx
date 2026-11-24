@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { BrandName } from '../components/BrandName'
+import { BrandName } from '../components/shared/BrandName'
 import { login } from '../services/auth'
-import type { AuthResponse } from '../types/lupita.types'
+import type { AuthResponse } from '../types/auth.types'
 
 interface LoginPageProps {
   onAccept: (session: AuthResponse) => void

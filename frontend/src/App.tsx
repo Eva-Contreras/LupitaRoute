@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { LoginPage } from './pages/LoginPage'
 import { PanelPage } from './pages/PanelPage'
-import type { AuthResponse } from './types/lupita.types'
+import type { AuthResponse } from './types/auth.types'
 
 export default function App() {
   const [session, setSession] = useState<AuthResponse | null>(null)

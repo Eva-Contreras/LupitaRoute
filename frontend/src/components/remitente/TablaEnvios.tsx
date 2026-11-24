@@ -1,5 +1,5 @@
-import { claseEstado } from '../repartidor/claseEstado'
-import type { EnvioDetalle } from '../../types/lupita.types'
+import { claseEstado } from '../../utils/claseEstado'
+import type { EnvioDetalle } from '../../types/envio.types'
 
 interface TablaEnviosProps {
   envios: EnvioDetalle[]

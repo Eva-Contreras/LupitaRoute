@@ -4,7 +4,7 @@ import { CrearEnvio } from './CrearEnvio'
 import { MisEnvios } from './MisEnvios'
 import { NavegacionRemitente } from './NavegacionRemitente'
 import type { SeccionRemitente } from './NavegacionRemitente'
-import { useEnvios } from './useEnvios'
+import { useEnvios } from '../../hooks/useEnvios'
 
 interface RemitentePanelProps {
   token: string

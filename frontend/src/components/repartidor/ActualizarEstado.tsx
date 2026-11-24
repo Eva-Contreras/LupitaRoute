@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import type { EnvioDetalle, EstadoPaquete } from '../../types/lupita.types'
+import type { EnvioDetalle, EstadoPaquete } from '../../types/envio.types'
 
 interface ActualizarEstadoProps {
   entregas: EnvioDetalle[]

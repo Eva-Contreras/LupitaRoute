@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { FiltrosEnvios } from './FiltrosEnvios'
 import { TablaEnvios } from './TablaEnvios'
-import type { EnvioDetalle, EstadoPaquete } from '../../types/lupita.types'
+import type { EnvioDetalle, EstadoPaquete } from '../../types/envio.types'
 
 interface MisEnviosProps {
   envios: EnvioDetalle[]

@@ -1,4 +1,4 @@
-import type { AuthResponse, RolNombre, Usuario } from '../types/lupita.types'
+import type { AuthResponse, RolNombre, Usuario } from '../types/auth.types'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null) {
