@@ -47,7 +47,7 @@ public class EnvioRepository : IEnvioRepository
         );
     }
 
-    public async Task ActualizarEstadoAsync(int envioId, int nuevoEstadoId, int usuarioCambioId, string? comentario)
+    public async Task ActualizarEstadoAsync(int envioId, int nuevoEstadoId, int usuarioCambioId, string rolUsuario, string? comentario)
     {
         using var connection = new SqlConnection(_connectionString);
         await connection.ExecuteAsync(
@@ -57,6 +57,7 @@ public class EnvioRepository : IEnvioRepository
                 EnvioId = envioId,
                 NuevoEstadoId = nuevoEstadoId,
                 UsuarioCambioId = usuarioCambioId,
+                RolUsuario = rolUsuario,
                 Comentario = comentario
             },
             commandType: CommandType.StoredProcedure
