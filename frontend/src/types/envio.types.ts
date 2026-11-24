@@ -122,6 +122,18 @@ export interface EnvioDetalle {
   fechaCreacion: string
 }
 
+export interface HistorialRastreo {
+  historialId: number
+  estado: string
+  usuarioCambio: string
+  comentario?: string
+  fechaCambio: string
+}
+
+export interface EnvioRastreo extends EnvioDetalle {
+  historial: HistorialRastreo[]
+}
+
 // POST api/Envios/cotizar (CotizarRequestDto / CotizarResponseDto)
 export interface CotizarRequest {
   pesoKg: number

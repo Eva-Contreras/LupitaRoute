@@ -63,5 +63,11 @@ export function useEnvios(token: string) {
     return envio
   }
 
-  return { envios, estados, cargando, error, reintentar, crear }
+  function actualizarEnLista(envio: EnvioDetalle) {
+    setEnvios((actuales) =>
+      actuales.map((actual) => actual.envioId === envio.envioId ? envio : actual),
+    )
+  }
+
+  return { envios, estados, cargando, error, reintentar, crear, actualizarEnLista }
 }

@@ -1,18 +1,33 @@
 import { useState } from 'react'
 import { FiltrosEnvios } from './FiltrosEnvios'
 import { TablaEnvios } from './TablaEnvios'
+import { DetalleEnvio } from './DetalleEnvio'
 import type { EnvioDetalle, EstadoPaquete } from '../../types/envio.types'
 
 interface MisEnviosProps {
   envios: EnvioDetalle[]
   estados: EstadoPaquete[]
+  onActualizar: (envio: EnvioDetalle) => void
 }
 
-export function MisEnvios({ envios, estados }: MisEnviosProps) {
+export function MisEnvios({ envios, estados, onActualizar }: MisEnviosProps) {
   const [busqueda, setBusqueda] = useState('')
   const [estado, setEstado] = useState('')
   const [fechaDesde, setFechaDesde] = useState('')
   const [fechaHasta, setFechaHasta] = useState('')
+  const [seleccionado, setSeleccionado] = useState<EnvioDetalle | null>(null)
+
+  if (seleccionado) {
+    return (
+      <DetalleEnvio
+        envio={seleccionado}
+        onVolver={(actualizado) => {
+          if (actualizado) onActualizar(actualizado)
+          setSeleccionado(null)
+        }}
+      />
+    )
+  }
 
   const termino = busqueda.trim().toLocaleLowerCase()
   const enviosFiltrados = envios
@@ -44,7 +59,7 @@ export function MisEnvios({ envios, estados }: MisEnviosProps) {
       <header className="sender-section-header">
         <div>
           <h2 id="shipments-title">Mis envíos</h2>
-          <p>Consulta tus paquetes y su estado más reciente.</p>
+          <p>Consulta tus paquetes y selecciona un código para ver el detalle.</p>
         </div>
       </header>
 
@@ -59,7 +74,7 @@ export function MisEnvios({ envios, estados }: MisEnviosProps) {
         onCambiarFechaDesde={setFechaDesde}
         onCambiarFechaHasta={setFechaHasta}
       />
-      <TablaEnvios envios={enviosFiltrados} />
+      <TablaEnvios envios={enviosFiltrados} onSeleccionar={setSeleccionado} />
     </section>
   )
 }

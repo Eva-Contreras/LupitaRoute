@@ -1,4 +1,4 @@
-import type { CotizarRequest, CotizarResponse, EnvioDetalle, EstadoPaquete, NuevoEnvioRequest } from '../types/envio.types'
+import type { CotizarRequest, CotizarResponse, EnvioDetalle, EnvioRastreo, EstadoPaquete, HistorialRastreo, NuevoEnvioRequest } from '../types/envio.types'
 
 export class ErrorApi extends Error {
   readonly estado: number | null
@@ -201,6 +201,47 @@ export async function obtenerMisEnvios(token: string): Promise<EnvioDetalle[]> {
 export async function obtenerEstados(): Promise<EstadoPaquete[]> {
   const payload = await solicitar({ ruta: '/api/Envios/estados' })
   return lista(payload, leerEstado)
+}
+
+export async function rastrearEnvio(codigo: string): Promise<EnvioRastreo> {
+  const payload = await solicitar({ ruta: `/api/Envios/rastreo/${encodeURIComponent(codigo)}` })
+  const envio = leerEnvio(payload)
+  if (!envio || !esRegistro(payload)) {
+    throw new ErrorApi('La API devolvió un envío no válido.')
+  }
+
+  const historial = campo(payload, 'historial')
+  if (!Array.isArray(historial)) {
+    throw new ErrorApi('La API devolvió un historial no válido.')
+  }
+  const movimientos: HistorialRastreo[] = historial.map((item: unknown) => {
+    if (!esRegistro(item)) {
+      throw new ErrorApi('La API devolvió un historial no válido.')
+    }
+    const historialId = campo(item, 'historialId')
+    const estado = campo(item, 'estado')
+    const usuarioCambio = campo(item, 'usuarioCambio')
+    const comentario = campo(item, 'comentario')
+    const fechaCambio = campo(item, 'fechaCambio')
+    if (
+      typeof historialId !== 'number' ||
+      typeof estado !== 'string' ||
+      typeof usuarioCambio !== 'string' ||
+      typeof fechaCambio !== 'string' ||
+      (comentario != null && typeof comentario !== 'string')
+    ) {
+      throw new ErrorApi('La API devolvió un historial no válido.')
+    }
+    return {
+      historialId,
+      estado,
+      usuarioCambio,
+      ...(typeof comentario === 'string' && comentario ? { comentario } : {}),
+      fechaCambio,
+    }
+  })
+
+  return { ...envio, historial: movimientos }
 }
 
 // PUT api/Envios/{envioId}/estado (sp_ActualizarEstadoEnvio)

@@ -64,6 +64,11 @@ envía nombre, correo, contraseña, teléfono opcional y `rolId: 3` a
 garantizar que el registro público se limite a receptores: esa restricción debe
 validarse también en el backend.
 
+En “Mis envíos”, el código de cada envío abre su detalle. El historial se
+consulta mediante `GET /api/Envios/rastreo/{codigo}`, un endpoint público del
+backend actual. Se puede volver a la lista conservando los filtros y copiar
+el código de rastreo.
+
 ## Comandos
 
 - `npm run dev`: inicia el servidor local de Vite.
