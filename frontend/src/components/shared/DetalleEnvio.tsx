@@ -6,6 +6,8 @@ import { claseEstado } from '../../utils/claseEstado'
 interface DetalleEnvioProps {
   envio: EnvioDetalle
   onVolver: (actualizado: EnvioRastreo | null) => void
+  textoVolver?: string
+  onActualizar?: (actualizado: EnvioRastreo | null) => void
 }
 
 const formatoFecha = new Intl.DateTimeFormat('es-MX', {
@@ -22,7 +24,12 @@ function fechaLegible(valor: string): string {
   return Number.isNaN(fecha.getTime()) ? '—' : formatoFecha.format(fecha)
 }
 
-export function DetalleEnvio({ envio, onVolver }: DetalleEnvioProps) {
+export function DetalleEnvio({
+  envio,
+  onVolver,
+  textoVolver = 'Volver a mis envíos',
+  onActualizar,
+}: DetalleEnvioProps) {
   const [rastreo, setRastreo] = useState<EnvioRastreo | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [cargando, setCargando] = useState(true)
@@ -73,12 +80,17 @@ export function DetalleEnvio({ envio, onVolver }: DetalleEnvioProps) {
           <p>{detalle.codigoRastreo}</p>
         </div>
         <button className="shipment-action" type="button" onClick={() => onVolver(rastreo)}>
-          Volver a mis envíos
+          {textoVolver}
         </button>
       </header>
 
       <div className="shipment-detail">
         <div className="shipment-detail__actions">
+          {onActualizar && (
+            <button className="shipment-action" type="button" onClick={() => onActualizar(rastreo)}>
+              Actualizar estado
+            </button>
+          )}
           <button className="shipment-action" type="button" onClick={copiarCodigo}>
             Copiar código
           </button>

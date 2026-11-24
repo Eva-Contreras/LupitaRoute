@@ -69,6 +69,14 @@ consulta mediante `GET /api/Envios/rastreo/{codigo}`, un endpoint público del
 backend actual. Se puede volver a la lista conservando los filtros y copiar
 el código de rastreo.
 
+El repartidor puede consultar el detalle y el historial de sus entregas, acceder
+desde ahí a la actualización de estado y recargar la lista. La sección “Envíos
+disponibles” consulta `GET /api/Envios/disponibles` y permite confirmar la
+recolección. El frontend obtiene el identificador de Recolectado del catálogo,
+actualiza el estado y vuelve a consultar “Mis entregas”. La asignación la realiza
+el procedimiento del backend; el frontend no puede evitar asignaciones
+simultáneas.
+
 ## Comandos
 
 - `npm run dev`: inicia el servidor local de Vite.

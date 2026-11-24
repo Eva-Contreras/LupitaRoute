@@ -4,6 +4,7 @@ import type { EnvioDetalle } from '../../types/envio.types'
 interface TablaEntregasProps {
   entregas: EnvioDetalle[]
   onActualizar: (envioId: number) => void
+  onSeleccionar: (envio: EnvioDetalle) => void
 }
 
 const formatoFecha = new Intl.DateTimeFormat('es-MX', {
@@ -16,7 +17,7 @@ function fechaLegible(valor: string): string {
   return Number.isNaN(fecha.getTime()) ? '—' : formatoFecha.format(fecha)
 }
 
-export function TablaEntregas({ entregas, onActualizar }: TablaEntregasProps) {
+export function TablaEntregas({ entregas, onActualizar, onSeleccionar }: TablaEntregasProps) {
   return (
     <div className="shipment-table-scroll">
       <table className="shipment-table">
@@ -36,7 +37,16 @@ export function TablaEntregas({ entregas, onActualizar }: TablaEntregasProps) {
         <tbody>
           {entregas.map((entrega) => (
             <tr key={entrega.envioId}>
-              <td className="shipment-code">{entrega.codigoRastreo}</td>
+              <td className="shipment-code">
+                <button
+                  type="button"
+                  className="shipment-code-button"
+                  onClick={() => onSeleccionar(entrega)}
+                  aria-label={`Ver detalle de la entrega ${entrega.codigoRastreo}`}
+                >
+                  {entrega.codigoRastreo}
+                </button>
+              </td>
               <td>{entrega.receptor}</td>
               <td>{entrega.direccionDestino}</td>
               <td>

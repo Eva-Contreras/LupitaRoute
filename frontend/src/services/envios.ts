@@ -197,6 +197,20 @@ export async function obtenerMisEnvios(token: string): Promise<EnvioDetalle[]> {
   return lista(payload, leerEnvio)
 }
 
+export async function obtenerEnviosDisponibles(token: string): Promise<EnvioDetalle[]> {
+  const payload = await solicitar({ ruta: '/api/Envios/disponibles', token })
+  if (!Array.isArray(payload)) {
+    throw new ErrorApi('La API devolvió una lista de envíos disponibles no válida.')
+  }
+  return payload.map((item: unknown) => {
+    const envio = leerEnvio(item)
+    if (!envio) {
+      throw new ErrorApi('La API devolvió un envío disponible no válido.')
+    }
+    return envio
+  })
+}
+
 // GET api/Envios/estados (catálogo, sp_ObtenerEstadosPaquete)
 export async function obtenerEstados(): Promise<EstadoPaquete[]> {
   const payload = await solicitar({ ruta: '/api/Envios/estados' })

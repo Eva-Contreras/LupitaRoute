@@ -71,5 +71,11 @@ export function useEntregas(token: string) {
     )
   }
 
-  return { envios, estados, cargando, error, reintentar, cambiarEstado }
+  function actualizarEnLista(envio: EnvioDetalle) {
+    setEnvios((actuales) =>
+      actuales.map((actual) => actual.envioId === envio.envioId ? envio : actual),
+    )
+  }
+
+  return { envios, estados, cargando, error, reintentar, cambiarEstado, actualizarEnLista }
 }

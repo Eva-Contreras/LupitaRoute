@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { FiltrosEnvios } from './FiltrosEnvios'
 import { TablaEnvios } from './TablaEnvios'
-import { DetalleEnvio } from './DetalleEnvio'
+import { DetalleEnvio } from '../shared/DetalleEnvio'
 import type { EnvioDetalle, EstadoPaquete } from '../../types/envio.types'
 
 interface MisEnviosProps {
