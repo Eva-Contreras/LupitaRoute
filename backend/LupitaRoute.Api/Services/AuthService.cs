@@ -8,12 +8,6 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace LupitaRoute.Api.Services;
 
-public interface IAuthService
-{
-    Task<AuthResponseDto> RegistrarAsync(RegisterRequestDto dto);
-    Task<AuthResponseDto?> LoginAsync(LoginRequestDto dto);
-}
-
 public class AuthService : IAuthService
 {
     private readonly IAuthRepository _authRepository;
