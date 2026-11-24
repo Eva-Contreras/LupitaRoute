@@ -1,4 +1,7 @@
-import type { EnvioDemostracion } from '../types/envio.types'
+import type {
+  EntregaDemostracion,
+  EnvioDemostracion,
+} from '../types/envio.types'
 
 export const enviosDemo: EnvioDemostracion[] = [
   {
@@ -48,5 +51,54 @@ export const enviosDemo: EnvioDemostracion[] = [
     ultimaActualizacion: '2026-11-20T14:00:00',
     estado: 'Entregado',
     costo: 175,
+  },
+]
+
+export const entregasDemo: EntregaDemostracion[] = [
+  {
+    codigo: 'LUP-2026-0142',
+    destinatario: 'Ana García',
+    destino: 'Zona Norte',
+    direccion: 'Av. Universidad 1200, Centro',
+    ultimaActualizacion: '2026-11-24T10:35:00',
+    estado: 'En reparto',
+    costo: 220,
+  },
+  {
+    codigo: 'LUP-2026-0148',
+    destinatario: 'Javier Torres',
+    destino: 'Zona Norte',
+    direccion: 'Calle del Sol 84, Norte',
+    ultimaActualizacion: '2026-11-24T11:20:00',
+    estado: 'En tránsito',
+    costo: 185,
+  },
+  {
+    codigo: 'LUP-2026-0151',
+    destinatario: 'Lucía Méndez',
+    destino: 'Zona Centro',
+    direccion: 'Calle Hidalgo 310, Centro',
+    ultimaActualizacion: '2026-11-24T09:05:00',
+    estado: 'Recolectado',
+    costo: 160,
+  },
+  {
+    codigo: 'LUP-2026-0139',
+    destinatario: 'Sofía Ramírez',
+    destino: 'Zona Sur',
+    direccion: 'Blvd. Los Fresnos 45, Sur',
+    ultimaActualizacion: '2026-11-23T16:10:00',
+    estado: 'Entregado',
+    costo: 175,
+  },
+  {
+    codigo: 'LUP-2026-0134',
+    destinatario: 'Diego Flores',
+    destino: 'Zona Oriente',
+    direccion: 'Priv. Las Palmas 9, Oriente',
+    ultimaActualizacion: '2026-11-23T13:45:00',
+    estado: 'Incidencia',
+    costo: 195,
+    comentario: 'Nadie en el domicilio',
   },
 ]

@@ -5,7 +5,7 @@ import { MisEnvios } from './MisEnvios'
 import { NavegacionRemitente } from './NavegacionRemitente'
 import type { SeccionRemitente } from './NavegacionRemitente'
 
-export function PanelRemitente() {
+export function RemitentePanel() {
   const [seccion, setSeccion] = useState<SeccionRemitente>('envios')
 
   return (
