@@ -7,6 +7,7 @@ interface FiltrosEnviosProps {
   estado: string
   fechaDesde: string
   fechaHasta: string
+  placeholderBusqueda?: string
   onCambiarBusqueda: (value: string) => void
   onCambiarEstado: (value: string) => void
   onCambiarFechaDesde: (value: string) => void
@@ -20,6 +21,7 @@ export function FiltrosEnvios({
   estado,
   fechaDesde,
   fechaHasta,
+  placeholderBusqueda = 'Código o receptor',
   onCambiarBusqueda,
   onCambiarEstado,
   onCambiarFechaDesde,
@@ -33,7 +35,7 @@ export function FiltrosEnvios({
           type="search"
           value={busqueda}
           onChange={(event) => onCambiarBusqueda(event.currentTarget.value)}
-          placeholder="Código o receptor"
+          placeholder={placeholderBusqueda}
         />
       </label>
       <label className="shipment-filter">

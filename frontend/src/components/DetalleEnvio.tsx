@@ -9,6 +9,8 @@ interface DetalleEnvioProps {
   onVolver: (actualizado: EnvioRastreo | null) => void
   textoVolver?: string
   onActualizar?: (actualizado: EnvioRastreo | null) => void
+  rastreoInicial?: EnvioRastreo
+  mostrarRemitente?: boolean
 }
 
 export function DetalleEnvio({
@@ -16,14 +18,17 @@ export function DetalleEnvio({
   onVolver,
   textoVolver = 'Volver a mis envíos',
   onActualizar,
+  rastreoInicial,
+  mostrarRemitente = false,
 }: DetalleEnvioProps) {
-  const [rastreo, setRastreo] = useState<EnvioRastreo | null>(null)
+  const [rastreo, setRastreo] = useState<EnvioRastreo | null>(rastreoInicial ?? null)
   const [error, setError] = useState<string | null>(null)
-  const [cargando, setCargando] = useState(true)
+  const [cargando, setCargando] = useState(!rastreoInicial)
   const [intento, setIntento] = useState(0)
   const [mensajeCopia, setMensajeCopia] = useState('')
 
   useEffect(() => {
+    if (rastreoInicial && intento === 0) return
     let vigente = true
     rastrearEnvio(envio.codigoRastreo)
       .then((resultado) => {
@@ -41,7 +46,7 @@ export function DetalleEnvio({
         if (vigente) setCargando(false)
       })
     return () => { vigente = false }
-  }, [envio.codigoRastreo, envio.envioId, intento])
+  }, [envio.codigoRastreo, envio.envioId, intento, rastreoInicial])
 
   async function copiarCodigo() {
     try {
@@ -84,6 +89,7 @@ export function DetalleEnvio({
           <span role="status">{mensajeCopia}</span>
         </div>
         <dl className="shipment-detail__grid">
+          {mostrarRemitente && <div><dt>Remitente</dt><dd>{detalle.remitente}</dd></div>}
           <div><dt>Receptor</dt><dd>{detalle.receptor}</dd></div>
           <div><dt>Repartidor</dt><dd>{detalle.repartidor ?? 'Sin asignar'}</dd></div>
           <div><dt>Dirección de origen</dt><dd>{detalle.direccionOrigen}</dd></div>

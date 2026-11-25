@@ -77,6 +77,11 @@ actualiza el estado y vuelve a consultar “Mis entregas”. La asignación la r
 el procedimiento del backend; el frontend no puede evitar asignaciones
 simultáneas.
 
+El receptor consulta “Mis paquetes” con `GET /api/Envios/mis-envios`, filtra
+sus envíos y abre el detalle y el historial de cada uno. También puede rastrear
+por código usando el endpoint público, incluso si el envío no está asociado a
+su cuenta. Solo aparecen en su lista los envíos registrados para su usuario.
+
 Los componentes reutilizados por varios roles están en la raíz de
 `src/components`; las carpetas `remitente`, `repartidor` y `receptor` contienen
 las vistas específicas de cada rol. La tabla y los filtros compartidos

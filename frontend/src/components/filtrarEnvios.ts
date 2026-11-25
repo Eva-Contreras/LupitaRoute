@@ -5,6 +5,7 @@ interface Filtros {
   estado: string
   fechaDesde: string
   fechaHasta: string
+  persona?: 'receptor' | 'remitente'
 }
 
 export function filtrarEnvios(envios: EnvioDetalle[], filtros: Filtros): EnvioDetalle[] {
@@ -14,7 +15,7 @@ export function filtrarEnvios(envios: EnvioDetalle[], filtros: Filtros): EnvioDe
       const coincideBusqueda =
         termino.length === 0 ||
         envio.codigoRastreo.toLocaleLowerCase().includes(termino) ||
-        envio.receptor.toLocaleLowerCase().includes(termino)
+        envio[filtros.persona ?? 'receptor'].toLocaleLowerCase().includes(termino)
       const fechaCreacion = envio.fechaCreacion.slice(0, 10)
       const coincideEstado = filtros.estado === '' || envio.estadoActual === filtros.estado
       const coincideFechaDesde = filtros.fechaDesde === '' || fechaCreacion >= filtros.fechaDesde

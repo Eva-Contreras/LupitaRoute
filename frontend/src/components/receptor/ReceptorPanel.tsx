@@ -1,39 +1,77 @@
-export function ReceptorPanel() {
-  return (
-    <div className="role-content">
-      <section className="dashboard-section tracking-card">
-        <h2>Rastrea tu paquete</h2>
-        <p>Ingresa el código de rastreo que te compartieron.</p>
-        <form className="tracking-form">
-          <label className="visually-hidden" htmlFor="codigo-rastreo">
-            Código de rastreo
-          </label>
-          <input
-            id="codigo-rastreo"
-            name="codigo-rastreo"
-            type="text"
-            placeholder="Ej. LUP-2026-0001"
-          />
-          <button type="button">Consultar</button>
-        </form>
-        <p className="tracking-demo-note">
-          Ejemplo visual: la consulta todavía no está conectada.
-        </p>
-      </section>
+import { useState } from 'react'
+import { useEnvios } from '../../hooks/useEnvios'
+import { MisPaquetes } from './MisPaquetes'
+import { RastrearPaquete } from './RastrearPaquete'
 
-      <section className="dashboard-section">
-        <h2>Envío reciente</h2>
-        <article className="tracking-result">
-          <div>
-            <span className="delivery-code">LUP-2026-0142</span>
-            <h3>Tu paquete está en camino</h3>
-            <p>Última actualización: hoy, 10:30 a. m.</p>
-          </div>
-          <span className="status-badge status-badge--en-transito">
-            En tránsito
-          </span>
-        </article>
+interface ReceptorPanelProps {
+  token: string
+  onSesionExpirada: () => void
+}
+
+export function ReceptorPanel({ token, onSesionExpirada }: ReceptorPanelProps) {
+  const [seccion, setSeccion] = useState<'paquetes' | 'rastreo'>('paquetes')
+  const { envios, estados, cargando, error, reintentar, actualizarEnLista } =
+    useEnvios(token)
+
+  let contenido
+  if (seccion === 'rastreo') {
+    contenido = <RastrearPaquete onActualizarLista={actualizarEnLista} />
+  } else if (cargando) {
+    contenido = (
+      <section className="sender-shipments panel-state" role="status">
+        <p>Cargando tus paquetes…</p>
       </section>
+    )
+  } else if (error) {
+    contenido = (
+      <section className="sender-shipments panel-state" role="alert">
+        <p className="panel-state__error">{error.mensaje}</p>
+        {error.sesionExpirada ? (
+          <button className="shipment-action" type="button" onClick={onSesionExpirada}>
+            Volver a iniciar sesión
+          </button>
+        ) : (
+          <button className="shipment-action" type="button" onClick={reintentar}>
+            Reintentar
+          </button>
+        )}
+      </section>
+    )
+  } else {
+    contenido = (
+      <MisPaquetes
+        envios={envios}
+        estados={estados}
+        onActualizar={actualizarEnLista}
+        onRecargar={reintentar}
+      />
+    )
+  }
+
+  return (
+    <div className="role-content sender-layout">
+      <aside className="sender-sidebar" aria-label="Navegación de receptor">
+        <h2>Paquetes</h2>
+        <nav className="sender-nav">
+          <button
+            className={`sender-nav-item${seccion === 'paquetes' ? ' sender-nav-item--active' : ''}`}
+            type="button"
+            aria-current={seccion === 'paquetes' ? 'page' : undefined}
+            onClick={() => setSeccion('paquetes')}
+          >
+            Mis paquetes
+          </button>
+          <button
+            className={`sender-nav-item${seccion === 'rastreo' ? ' sender-nav-item--active' : ''}`}
+            type="button"
+            aria-current={seccion === 'rastreo' ? 'page' : undefined}
+            onClick={() => setSeccion('rastreo')}
+          >
+            Rastrear paquete
+          </button>
+        </nav>
+      </aside>
+      {contenido}
     </div>
   )
 }
