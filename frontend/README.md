@@ -57,6 +57,8 @@ archivos.
 
 El inicio de sesión envía `correo` y `password` a `POST /api/Auth/login`. La
 sesión se mantiene solo en memoria y se limpia al cerrar sesión.
+Después de iniciar sesión, el frontend consulta `GET /api/Auth/me` con el token
+para cargar el perfil vigente.
 
 Desde el inicio de sesión se puede crear una cuenta de receptor. El frontend
 envía nombre, correo, contraseña, teléfono opcional y `rolId: 3` a
@@ -72,10 +74,15 @@ el código de rastreo.
 El repartidor puede consultar el detalle y el historial de sus entregas, acceder
 desde ahí a la actualización de estado y recargar la lista. La sección “Envíos
 disponibles” consulta `GET /api/Envios/disponibles` y permite confirmar la
-recolección. El frontend obtiene el identificador de Recolectado del catálogo,
-actualiza el estado y vuelve a consultar “Mis entregas”. La asignación la realiza
-el procedimiento del backend; el frontend no puede evitar asignaciones
-simultáneas.
+recolección. También permite asignar un envío a su cuenta mediante
+`PUT /api/Envios/{envioId}/asignar`. Para confirmar una recolección, el frontend
+obtiene el identificador de Recolectado del catálogo, actualiza el estado y
+vuelve a consultar “Mis entregas”.
+
+Al crear un envío, el remitente puede verificar el correo del receptor con
+`GET /api/Envios/verificar-receptor` antes de enviar el formulario. La pantalla
+de cotización muestra las tarifas de `GET /api/Envios/tarifas` y calcula el
+importe con `POST /api/Envios/cotizar`.
 
 Las listas de “Mis envíos”, “Mis entregas” y “Mis paquetes” usan los parámetros
 de `GET /api/Envios/mis-envios`: `pagina`, `tamanoPagina` (10), `estadoId` y

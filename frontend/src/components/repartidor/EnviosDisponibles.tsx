@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ErrorApi, obtenerEnviosDisponibles } from '../../services/envios'
+import { asignarEnvio, ErrorApi, obtenerEnviosDisponibles } from '../../services/envios'
 import type { EnvioDetalle } from '../../types/envio.types'
 import { EstadoEnvioBadge } from '../EstadoEnvioBadge'
 
@@ -21,6 +21,12 @@ export function EnviosDisponibles({
   const [error, setError] = useState<{ mensaje: string; sesionExpirada: boolean } | null>(null)
   const [intento, setIntento] = useState(0)
   const [seleccionado, setSeleccionado] = useState<EnvioDetalle | null>(null)
+  const [asignandoEnvioId, setAsignandoEnvioId] = useState<number | null>(null)
+  const [mensajeAsignacion, setMensajeAsignacion] = useState<string | null>(null)
+  const [errorAsignacion, setErrorAsignacion] = useState<{
+    mensaje: string
+    sesionExpirada: boolean
+  } | null>(null)
   const [errorRecoleccion, setErrorRecoleccion] = useState<{
     mensaje: string
     sesionExpirada: boolean
@@ -53,6 +59,27 @@ export function EnviosDisponibles({
     setCargando(true)
     setError(null)
     setIntento((actual) => actual + 1)
+  }
+
+  async function asignarAmi(envio: EnvioDetalle) {
+    if (asignandoEnvioId !== null) return
+    setAsignandoEnvioId(envio.envioId)
+    setErrorAsignacion(null)
+    setMensajeAsignacion(null)
+    try {
+      await asignarEnvio(token, envio.envioId)
+      setMensajeAsignacion(`El envío ${envio.codigoRastreo} quedó asignado a tu cuenta.`)
+      recargar()
+    } catch (caughtError: unknown) {
+      setErrorAsignacion({
+        mensaje: caughtError instanceof Error
+          ? caughtError.message
+          : 'No se pudo asignar el envío.',
+        sesionExpirada: caughtError instanceof ErrorApi && caughtError.estado === 401,
+      })
+    } finally {
+      setAsignandoEnvioId(null)
+    }
   }
 
   async function confirmarRecoleccion() {
@@ -166,6 +193,17 @@ export function EnviosDisponibles({
           Actualizar lista
         </button>
       </header>
+      {mensajeAsignacion && <p className="quote-demo-note" role="status">{mensajeAsignacion}</p>}
+      {errorAsignacion && (
+        <div className="panel-state" role="alert">
+          <p className="panel-state__error">{errorAsignacion.mensaje}</p>
+          {errorAsignacion.sesionExpirada && (
+            <button className="shipment-action" type="button" onClick={onSesionExpirada}>
+              Volver a iniciar sesión
+            </button>
+          )}
+        </div>
+      )}
       {cargando ? (
         <div className="panel-state" role="status"><p>Cargando envíos disponibles…</p></div>
       ) : error ? (
@@ -188,7 +226,7 @@ export function EnviosDisponibles({
                 <th scope="col">Dirección de entrega</th>
                 <th scope="col">Paquete</th>
                 <th scope="col">Estado</th>
-                <th scope="col"><span className="visually-hidden">Acciones</span></th>
+                <th scope="col">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -205,9 +243,18 @@ export function EnviosDisponibles({
                       className="shipment-action"
                       type="button"
                       onClick={() => setSeleccionado(envio)}
+                      disabled={asignandoEnvioId !== null}
                       aria-label={`Registrar recolección del envío ${envio.codigoRastreo}`}
                     >
                       Registrar recolección
+                    </button>
+                    <button
+                      className="shipment-action"
+                      type="button"
+                      onClick={() => asignarAmi(envio)}
+                      disabled={asignandoEnvioId !== null || registrando}
+                    >
+                      {asignandoEnvioId === envio.envioId ? 'Asignando…' : 'Asignar a mí'}
                     </button>
                   </td>
                 </tr>

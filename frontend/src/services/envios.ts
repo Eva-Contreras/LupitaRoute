@@ -1,4 +1,4 @@
-import type { CotizarRequest, CotizarResponse, EnvioDetalle, EnvioRastreo, EnvioRastreoPublico, EstadoPaquete, HistorialPublico, HistorialRastreo, NuevoEnvioRequest, ResumenEnvios } from '../types/envio.types'
+import type { CotizarRequest, CotizarResponse, EnvioDetalle, EnvioRastreo, EnvioRastreoPublico, EstadoPaquete, HistorialPublico, HistorialRastreo, NuevoEnvioRequest, ReceptorVerificado, ResumenEnvios, TarifaItem } from '../types/envio.types'
 
 export class ErrorApi extends Error {
   readonly estado: number | null
@@ -48,6 +48,48 @@ function leerEstado(value: unknown): EstadoPaquete | null {
     nombre,
     descripcion: texto(campo(value, 'descripcion')),
   }
+}
+
+function leerTarifa(value: unknown): TarifaItem | null {
+  if (!esRegistro(value)) {
+    return null
+  }
+  const tarifaId = campo(value, 'tarifaId')
+  const nombreTarifa = campo(value, 'nombreTarifa')
+  const pesoMinKg = campo(value, 'pesoMinKg')
+  const pesoMaxKg = campo(value, 'pesoMaxKg')
+  const precioBase = campo(value, 'precioBase')
+  const precioPorKm = campo(value, 'precioPorKm')
+  if (
+    typeof tarifaId !== 'number' ||
+    typeof nombreTarifa !== 'string' ||
+    typeof pesoMinKg !== 'number' ||
+    typeof pesoMaxKg !== 'number' ||
+    typeof precioBase !== 'number' ||
+    typeof precioPorKm !== 'number'
+  ) {
+    return null
+  }
+  return { tarifaId, nombreTarifa, pesoMinKg, pesoMaxKg, precioBase, precioPorKm }
+}
+
+function leerReceptorVerificado(value: unknown): ReceptorVerificado | null {
+  if (!esRegistro(value)) {
+    return null
+  }
+  const usuarioId = campo(value, 'usuarioId')
+  const nombreCompleto = campo(value, 'nombreCompleto')
+  const correo = campo(value, 'correo')
+  const rol = campo(value, 'rol')
+  if (
+    typeof usuarioId !== 'number' ||
+    typeof nombreCompleto !== 'string' ||
+    typeof correo !== 'string' ||
+    typeof rol !== 'string'
+  ) {
+    return null
+  }
+  return { usuarioId, nombreCompleto, correo, rol }
 }
 
 function leerEnvio(value: unknown): EnvioDetalle | null {
@@ -304,6 +346,38 @@ export async function obtenerEstados(): Promise<EstadoPaquete[]> {
   return lista(payload, leerEstado)
 }
 
+// GET api/Envios/tarifas
+export async function obtenerTarifas(): Promise<TarifaItem[]> {
+  const payload = await solicitar({ ruta: '/api/Envios/tarifas' })
+  if (!Array.isArray(payload)) {
+    throw new ErrorApi('La API devolvió una lista de tarifas no válida.')
+  }
+  return payload.map((item: unknown) => {
+    const tarifa = leerTarifa(item)
+    if (!tarifa) {
+      throw new ErrorApi('La API devolvió una tarifa no válida.')
+    }
+    return tarifa
+  })
+}
+
+// GET api/Envios/verificar-receptor (solo Remitente)
+export async function verificarReceptor(
+  token: string,
+  correo: string,
+): Promise<ReceptorVerificado> {
+  const parametros = new URLSearchParams({ correo: correo.trim() })
+  const payload = await solicitar({
+    ruta: `/api/Envios/verificar-receptor?${parametros.toString()}`,
+    token,
+  })
+  const receptor = leerReceptorVerificado(payload)
+  if (!receptor) {
+    throw new ErrorApi('La API devolvió un receptor no válido.')
+  }
+  return receptor
+}
+
 // GET api/Envios/rastreo/publico/{codigo} (sin sesión, datos limitados)
 export async function rastrearEnvioPublico(codigo: string): Promise<EnvioRastreoPublico> {
   const payload = await solicitar({
@@ -395,6 +469,20 @@ export async function actualizarEstado(
     token,
     cuerpo: { nuevoEstadoId, comentario },
   })
+}
+
+// PUT api/Envios/{envioId}/asignar (solo Repartidor)
+export async function asignarEnvio(token: string, envioId: number): Promise<EnvioDetalle> {
+  const payload = await solicitar({
+    ruta: `/api/Envios/${envioId}/asignar`,
+    metodo: 'PUT',
+    token,
+  })
+  const envio = leerEnvio(payload)
+  if (!envio) {
+    throw new ErrorApi('La API devolvió un envío asignado no válido.')
+  }
+  return envio
 }
 
 // POST api/Envios/cotizar (público)
