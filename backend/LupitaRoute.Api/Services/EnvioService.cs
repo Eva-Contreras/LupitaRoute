@@ -110,4 +110,8 @@ public class EnvioService : IEnvioService
         return await _envioRepository.ObtenerPorCodigoRastreoAsync(codigoRastreo)
             ?? throw new InvalidOperationException("No se encontró el envío después de asignarlo.");
     }
+    public async Task<ResumenEnviosDto> ObtenerResumenAsync(int usuarioId, string rol)
+    {
+        return await _envioRepository.ObtenerResumenPorUsuarioAsync(usuarioId, rol);
+    }
 }
