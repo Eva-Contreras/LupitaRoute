@@ -1,58 +1,38 @@
 import { useEffect, useState } from 'react'
-import {
-  actualizarEstado,
-  ErrorApi,
-  obtenerEstados,
-  obtenerMisEnvios,
-} from '../services/envios'
-import type { EnvioDetalle, EstadoPaquete } from '../types/envio.types'
+import { actualizarEstado, consultarMisEnvios } from '../services/envios'
+import type { EnvioDetalle } from '../types/envio.types'
+import { aErrorVista, useListaEnvios } from './useListaEnvios'
 
-export interface ErrorVista {
-  mensaje: string
-  sesionExpirada: boolean
-}
+export type { ErrorVista } from './useListaEnvios'
 
-function aErrorVista(error: unknown): ErrorVista {
-  if (error instanceof ErrorApi) {
-    return { mensaje: error.message, sesionExpirada: error.estado === 401 }
-  }
-  return { mensaje: 'Ocurrió un error inesperado.', sesionExpirada: false }
+const MAXIMO_SELECTOR = 50
+
+interface Complemento {
+  clave: string
+  selector: EnvioDetalle[]
 }
 
 export function useEntregas(token: string) {
-  const [envios, setEnvios] = useState<EnvioDetalle[]>([])
-  const [estados, setEstados] = useState<EstadoPaquete[]>([])
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState<ErrorVista | null>(null)
-  const [intento, setIntento] = useState(0)
+  const lista = useListaEnvios(token)
+  const { intento, reintentar } = lista
+  const [complemento, setComplemento] = useState<Complemento | null>(null)
+  const [falloSelector, setFalloSelector] = useState<{ clave: string; error: ReturnType<typeof aErrorVista> } | null>(null)
+  const clave = `${token}|${intento}`
 
   useEffect(() => {
     let vigente = true
-
-    Promise.all([obtenerMisEnvios(token), obtenerEstados()])
-      .then(([enviosApi, estadosApi]) => {
+    consultarMisEnvios(token, { tamanoPagina: MAXIMO_SELECTOR })
+      .then((pagina) => {
         if (!vigente) return
-        setEnvios(enviosApi)
-        setEstados(estadosApi)
-        setError(null)
+        setComplemento({ clave, selector: pagina.items })
       })
-      .catch((caughtError: unknown) => {
-        if (vigente) setError(aErrorVista(caughtError))
+      .catch((error: unknown) => {
+        if (vigente) setFalloSelector({ clave, error: aErrorVista(error) })
       })
-      .finally(() => {
-        if (vigente) setCargando(false)
-      })
-
     return () => {
       vigente = false
     }
-  }, [token, intento])
-
-  function reintentar() {
-    setCargando(true)
-    setError(null)
-    setIntento((actual) => actual + 1)
-  }
+  }, [token, clave])
 
   async function cambiarEstado(
     envioId: number,
@@ -60,22 +40,14 @@ export function useEntregas(token: string) {
     comentario: string,
   ) {
     await actualizarEstado(token, envioId, estadoId, comentario || null)
-    const nombre =
-      estados.find((estado) => estado.estadoId === estadoId)?.nombre ?? ''
-    setEnvios((actuales) =>
-      actuales.map((envio) =>
-        envio.envioId === envioId
-          ? { ...envio, estadoActualId: estadoId, estadoActual: nombre }
-          : envio,
-      ),
-    )
+    reintentar()
   }
 
-  function actualizarEnLista(envio: EnvioDetalle) {
-    setEnvios((actuales) =>
-      actuales.map((actual) => actual.envioId === envio.envioId ? envio : actual),
-    )
+  return {
+    ...lista,
+    cambiarEstado,
+    entregasSelector: complemento?.clave === clave ? complemento.selector : [],
+    cargandoSelector: complemento?.clave !== clave && falloSelector?.clave !== clave,
+    errorSelector: falloSelector?.clave === clave ? falloSelector.error : null,
   }
-
-  return { envios, estados, cargando, error, reintentar, cambiarEstado, actualizarEnLista }
 }

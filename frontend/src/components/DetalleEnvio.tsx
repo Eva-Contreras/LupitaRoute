@@ -5,6 +5,7 @@ import { EstadoEnvioBadge } from './EstadoEnvioBadge'
 import { fechaLegible, formatoMoneda } from './formatoEnvio'
 
 interface DetalleEnvioProps {
+  token: string
   envio: EnvioDetalle
   onVolver: (actualizado: EnvioRastreo | null) => void
   textoVolver?: string
@@ -14,6 +15,7 @@ interface DetalleEnvioProps {
 }
 
 export function DetalleEnvio({
+  token,
   envio,
   onVolver,
   textoVolver = 'Volver a mis envíos',
@@ -30,7 +32,7 @@ export function DetalleEnvio({
   useEffect(() => {
     if (rastreoInicial && intento === 0) return
     let vigente = true
-    rastrearEnvio(envio.codigoRastreo)
+    rastrearEnvio(token, envio.codigoRastreo)
       .then((resultado) => {
         if (resultado.envioId !== envio.envioId || resultado.codigoRastreo !== envio.codigoRastreo) {
           throw new Error('El rastreo devuelto no corresponde al envío seleccionado.')
@@ -46,7 +48,7 @@ export function DetalleEnvio({
         if (vigente) setCargando(false)
       })
     return () => { vigente = false }
-  }, [envio.codigoRastreo, envio.envioId, intento, rastreoInicial])
+  }, [token, envio.codigoRastreo, envio.envioId, intento, rastreoInicial])
 
   async function copiarCodigo() {
     try {

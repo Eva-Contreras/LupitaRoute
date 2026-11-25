@@ -1,20 +1,25 @@
 import { useState } from 'react'
 import { DetalleEnvio } from '../DetalleEnvio'
 import { FiltrosEnvios } from '../FiltrosEnvios'
-import { filtrarEnvios } from '../filtrarEnvios'
+import { PaginacionEnvios } from '../PaginacionEnvios'
+import { ResumenEnvios } from '../ResumenEnvios'
+import { filtrarPorFecha } from '../filtrarPorFecha'
 import { TablaEnvios } from '../TablaEnvios'
+import type { ControlesLista } from '../controlesLista'
 import type { EnvioDetalle, EstadoPaquete } from '../../types/envio.types'
 
 interface MisPaquetesProps {
+  token: string
   envios: EnvioDetalle[]
   estados: EstadoPaquete[]
+  controles: ControlesLista
+  actualizacion: number
+  onSesionExpirada: () => void
   onActualizar: (envio: EnvioDetalle) => void
   onRecargar: () => void
 }
 
-export function MisPaquetes({ envios, estados, onActualizar, onRecargar }: MisPaquetesProps) {
-  const [busqueda, setBusqueda] = useState('')
-  const [estado, setEstado] = useState('')
+export function MisPaquetes({ token, envios, estados, controles, actualizacion, onSesionExpirada, onActualizar, onRecargar }: MisPaquetesProps) {
   const [fechaDesde, setFechaDesde] = useState('')
   const [fechaHasta, setFechaHasta] = useState('')
   const [seleccionado, setSeleccionado] = useState<EnvioDetalle | null>(null)
@@ -22,6 +27,7 @@ export function MisPaquetes({ envios, estados, onActualizar, onRecargar }: MisPa
   if (seleccionado) {
     return (
       <DetalleEnvio
+        token={token}
         envio={seleccionado}
         mostrarRemitente
         textoVolver="Volver a mis paquetes"
@@ -33,9 +39,8 @@ export function MisPaquetes({ envios, estados, onActualizar, onRecargar }: MisPa
     )
   }
 
-  const filtrados = filtrarEnvios(envios, {
-    busqueda, estado, fechaDesde, fechaHasta, persona: 'remitente',
-  })
+  const filtrados = filtrarPorFecha(envios, fechaDesde, fechaHasta)
+  const sinFiltros = controles.busqueda.trim() === '' && controles.estadoId === ''
 
   return (
     <section className="sender-shipments" aria-labelledby="packages-title">
@@ -48,24 +53,32 @@ export function MisPaquetes({ envios, estados, onActualizar, onRecargar }: MisPa
           Actualizar lista
         </button>
       </header>
+      <ResumenEnvios key={actualizacion} token={token} rol="Receptor" actualizacion={actualizacion} onSesionExpirada={onSesionExpirada} />
       <FiltrosEnvios
         etiqueta="Filtros de paquetes"
         estados={estados}
-        busqueda={busqueda}
-        estado={estado}
+        busqueda={controles.busqueda}
+        estado={controles.estadoId}
         fechaDesde={fechaDesde}
         fechaHasta={fechaHasta}
         placeholderBusqueda="Código o remitente"
-        onCambiarBusqueda={setBusqueda}
-        onCambiarEstado={setEstado}
+        onCambiarBusqueda={controles.onCambiarBusqueda}
+        onCambiarEstado={controles.onCambiarEstado}
         onCambiarFechaDesde={setFechaDesde}
         onCambiarFechaHasta={setFechaHasta}
       />
-      {envios.length === 0 ? (
+      {envios.length === 0 && sinFiltros && !controles.actualizando ? (
         <p className="shipment-empty">Aún no tienes paquetes asociados a tu cuenta.</p>
       ) : (
         <TablaEnvios vista="receptor" envios={filtrados} onSeleccionar={setSeleccionado} />
       )}
+      <PaginacionEnvios
+        pagina={controles.pagina}
+        totalPaginas={controles.totalPaginas}
+        totalRegistros={controles.totalRegistros}
+        deshabilitada={controles.actualizando}
+        onCambiar={controles.onCambiarPagina}
+      />
     </section>
   )
 }

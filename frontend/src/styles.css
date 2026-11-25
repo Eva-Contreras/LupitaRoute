@@ -1148,9 +1148,15 @@ textarea {
 /* Indicadores del repartidor */
 .courier-metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
   padding: 0 22px 20px;
+}
+
+.resumen-estado {
+  padding: 0 22px 12px;
+  color: var(--color-secundario);
+  font-size: 0.85rem;
 }
 
 .courier-metrics .metric-card {
@@ -1309,6 +1315,27 @@ textarea {
 .shipment-action:hover {
   border-color: var(--color-principal);
   background-color: var(--color-principal-suave);
+}
+
+.shipment-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  color: var(--color-secundario);
+  font-size: 0.82rem;
+}
+
+.shipment-pagination__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.shipment-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .panel-state {

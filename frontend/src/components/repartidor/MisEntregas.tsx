@@ -2,12 +2,19 @@ import { useState } from 'react'
 import { FiltrosEnvios } from '../FiltrosEnvios'
 import { TablaEnvios } from '../TablaEnvios'
 import { DetalleEnvio } from '../DetalleEnvio'
-import { filtrarEnvios } from '../filtrarEnvios'
+import { PaginacionEnvios } from '../PaginacionEnvios'
+import { ResumenEnvios } from '../ResumenEnvios'
+import { filtrarPorFecha } from '../filtrarPorFecha'
+import type { ControlesLista } from '../controlesLista'
 import type { EnvioDetalle, EstadoPaquete } from '../../types/envio.types'
 
 interface MisEntregasProps {
+  token: string
   entregas: EnvioDetalle[]
   estados: EstadoPaquete[]
+  controles: ControlesLista
+  actualizacion: number
+  onSesionExpirada: () => void
   onActualizar: (envioId: number) => void
   onActualizarLista: (envio: EnvioDetalle) => void
   onRecargar: () => void
@@ -15,15 +22,17 @@ interface MisEntregasProps {
 }
 
 export function MisEntregas({
+  token,
   entregas,
   estados,
+  controles,
+  actualizacion,
+  onSesionExpirada,
   onActualizar,
   onActualizarLista,
   onRecargar,
   recoleccion,
 }: MisEntregasProps) {
-  const [busqueda, setBusqueda] = useState('')
-  const [estado, setEstado] = useState('')
   const [fechaDesde, setFechaDesde] = useState('')
   const [fechaHasta, setFechaHasta] = useState('')
   const [seleccionado, setSeleccionado] = useState<EnvioDetalle | null>(null)
@@ -31,6 +40,7 @@ export function MisEntregas({
   if (seleccionado) {
     return (
       <DetalleEnvio
+        token={token}
         envio={seleccionado}
         textoVolver="Volver a mis entregas"
         onVolver={(actualizado) => {
@@ -45,10 +55,7 @@ export function MisEntregas({
     )
   }
 
-  const entregasFiltradas = filtrarEnvios(entregas, { busqueda, estado, fechaDesde, fechaHasta })
-
-  const enReparto = entregas.filter((e) => e.estadoActual === 'En reparto').length
-  const entregadas = entregas.filter((e) => e.estadoActual === 'Entregado').length
+  const entregasFiltradas = filtrarPorFecha(entregas, fechaDesde, fechaHasta)
 
   return (
     <section className="sender-shipments" aria-labelledby="deliveries-title">
@@ -64,36 +71,22 @@ export function MisEntregas({
 
       {recoleccion && (
         <p className="courier-notice" role="status">
-          {entregas.some((entrega) => entrega.envioId === recoleccion.envioId)
-            ? `La recolección de ${recoleccion.codigo} se registró y el envío aparece en tus entregas.`
-            : `La API aceptó la recolección de ${recoleccion.codigo}, pero el envío no aparece en tus entregas. Actualiza la lista o consulta con un administrador.`}
+          La recolección de {recoleccion.codigo} se registró. Si no lo ves en esta página, usa
+          la búsqueda por código.
         </p>
       )}
 
-      <div className="courier-metrics">
-        <article className="metric-card">
-          <span>Entregas asignadas</span>
-          <strong>{entregas.length}</strong>
-        </article>
-        <article className="metric-card">
-          <span>En reparto</span>
-          <strong>{enReparto}</strong>
-        </article>
-        <article className="metric-card">
-          <span>Entregadas</span>
-          <strong>{entregadas}</strong>
-        </article>
-      </div>
+      <ResumenEnvios key={actualizacion} token={token} rol="Repartidor" actualizacion={actualizacion} onSesionExpirada={onSesionExpirada} />
 
       <FiltrosEnvios
         etiqueta="Filtros de entregas"
         estados={estados}
-        busqueda={busqueda}
-        estado={estado}
+        busqueda={controles.busqueda}
+        estado={controles.estadoId}
         fechaDesde={fechaDesde}
         fechaHasta={fechaHasta}
-        onCambiarBusqueda={setBusqueda}
-        onCambiarEstado={setEstado}
+        onCambiarBusqueda={controles.onCambiarBusqueda}
+        onCambiarEstado={controles.onCambiarEstado}
         onCambiarFechaDesde={setFechaDesde}
         onCambiarFechaHasta={setFechaHasta}
       />
@@ -102,6 +95,13 @@ export function MisEntregas({
         envios={entregasFiltradas}
         onActualizar={onActualizar}
         onSeleccionar={setSeleccionado}
+      />
+      <PaginacionEnvios
+        pagina={controles.pagina}
+        totalPaginas={controles.totalPaginas}
+        totalRegistros={controles.totalRegistros}
+        deshabilitada={controles.actualizando}
+        onCambiar={controles.onCambiarPagina}
       />
     </section>
   )
