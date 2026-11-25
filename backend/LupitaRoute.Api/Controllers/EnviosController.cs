@@ -57,13 +57,13 @@ public class EnviosController : ControllerBase
 
     [Authorize]
     [HttpGet("mis-envios")]
-    public async Task<IActionResult> ObtenerMisEnvios()
+    public async Task<IActionResult> ObtenerMisEnvios([FromQuery] FiltroEnviosQueryDto filtro)
     {
         int usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         string rol = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
 
-        var envios = await _envioService.ObtenerMisEnviosAsync(usuarioId, rol);
-        return Ok(envios);
+        var resultado = await _envioService.ObtenerMisEnviosAsync(usuarioId, rol, filtro);
+        return Ok(resultado);
     }
 
     [Authorize(Roles = "Repartidor")]
@@ -141,7 +141,7 @@ public class EnviosController : ControllerBase
             return BadRequest(new { mensaje = ex.Message });
         }
     }
-    
+
     [Authorize]
     [HttpGet("resumen")]
     public async Task<IActionResult> ObtenerResumen()

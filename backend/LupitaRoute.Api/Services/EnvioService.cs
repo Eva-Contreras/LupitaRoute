@@ -89,9 +89,9 @@ public class EnvioService : IEnvioService
         return await _envioRepository.ObtenerPublicoPorCodigoRastreoAsync(codigoRastreo.Trim().ToUpper());
     }
 
-    public async Task<IEnumerable<EnvioDetalleDto>> ObtenerMisEnviosAsync(int usuarioId, string rol)
+    public async Task<EnviosPaginadosDto> ObtenerMisEnviosAsync(int usuarioId, string rol, FiltroEnviosQueryDto filtro)
     {
-        return await _envioRepository.ObtenerEnviosPorUsuarioAsync(usuarioId, rol);
+        return await _envioRepository.ObtenerEnviosPorUsuarioAsync(usuarioId, rol, filtro);
     }
 
     public async Task<IEnumerable<EnvioDetalleDto>> ObtenerDisponiblesAsync()
@@ -110,6 +110,7 @@ public class EnvioService : IEnvioService
         return await _envioRepository.ObtenerPorCodigoRastreoAsync(codigoRastreo)
             ?? throw new InvalidOperationException("No se encontró el envío después de asignarlo.");
     }
+
     public async Task<ResumenEnviosDto> ObtenerResumenAsync(int usuarioId, string rol)
     {
         return await _envioRepository.ObtenerResumenPorUsuarioAsync(usuarioId, rol);
