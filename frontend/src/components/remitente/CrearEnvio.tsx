@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react'
+import { verificarReceptor } from '../../services/envios'
 import type { EnvioDetalle, NuevoEnvioRequest } from '../../types/envio.types'
 
 interface CrearEnvioProps {
+  token: string
   onCrear: (solicitud: NuevoEnvioRequest) => Promise<EnvioDetalle>
 }
 
@@ -10,8 +12,11 @@ const formatoMoneda = new Intl.NumberFormat('es-MX', {
   currency: 'MXN',
 })
 
-export function CrearEnvio({ onCrear }: CrearEnvioProps) {
+export function CrearEnvio({ token, onCrear }: CrearEnvioProps) {
   const [correoReceptor, setCorreoReceptor] = useState('')
+  const [receptorVerificado, setReceptorVerificado] = useState<{ correo: string; nombre: string } | null>(null)
+  const [verificandoReceptor, setVerificandoReceptor] = useState(false)
+  const [errorVerificacion, setErrorVerificacion] = useState<string | null>(null)
   const [direccionOrigen, setDireccionOrigen] = useState('')
   const [direccionDestino, setDireccionDestino] = useState('')
   const [descripcionPaquete, setDescripcionPaquete] = useState('')
@@ -21,6 +26,33 @@ export function CrearEnvio({ onCrear }: CrearEnvioProps) {
   const [confirmacion, setConfirmacion] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  async function verificarCorreo() {
+    const correo = correoReceptor.trim().toLowerCase()
+    if (!correo) {
+      setErrorVerificacion('Escribe el correo del receptor para verificarlo.')
+      return
+    }
+
+    setVerificandoReceptor(true)
+    setErrorVerificacion(null)
+    setReceptorVerificado(null)
+    try {
+      const receptor = await verificarReceptor(token, correo)
+      setReceptorVerificado({
+        correo: receptor.correo.toLowerCase(),
+        nombre: receptor.nombreCompleto,
+      })
+    } catch (caughtError) {
+      setErrorVerificacion(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'No se pudo verificar el correo del receptor.',
+      )
+    } finally {
+      setVerificandoReceptor(false)
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setGuardando(true)
@@ -28,6 +60,9 @@ export function CrearEnvio({ onCrear }: CrearEnvioProps) {
     setConfirmacion(null)
 
     try {
+      if (receptorVerificado?.correo !== correoReceptor.trim().toLowerCase()) {
+        throw new Error('Verifica el correo del receptor antes de crear el envío.')
+      }
       const envio = await onCrear({
         correoReceptor: correoReceptor.trim(),
         direccionOrigen: direccionOrigen.trim(),
@@ -40,6 +75,7 @@ export function CrearEnvio({ onCrear }: CrearEnvioProps) {
         `Envío ${envio.codigoRastreo} creado. Costo total: ${formatoMoneda.format(envio.costoTotal)}.`,
       )
       setCorreoReceptor('')
+      setReceptorVerificado(null)
       setDireccionOrigen('')
       setDireccionDestino('')
       setDescripcionPaquete('')
@@ -79,9 +115,31 @@ export function CrearEnvio({ onCrear }: CrearEnvioProps) {
                 placeholder="correo@ejemplo.com"
                 required
                 value={correoReceptor}
-                onChange={(event) => setCorreoReceptor(event.currentTarget.value)}
+                onChange={(event) => {
+                  setCorreoReceptor(event.currentTarget.value)
+                  setReceptorVerificado(null)
+                  setErrorVerificacion(null)
+                }}
               />
             </div>
+            <button
+              className="shipment-action"
+              type="button"
+              disabled={verificandoReceptor || guardando}
+              onClick={verificarCorreo}
+            >
+              {verificandoReceptor ? 'Verificando…' : 'Verificar receptor'}
+            </button>
+            {receptorVerificado && (
+              <p className="quote-demo-note" role="status">
+                Receptor verificado: {receptorVerificado.nombre} ({receptorVerificado.correo}).
+              </p>
+            )}
+            {errorVerificacion && (
+              <p className="quote-demo-note form-message--error" role="alert">
+                {errorVerificacion}
+              </p>
+            )}
           </div>
         </section>
 

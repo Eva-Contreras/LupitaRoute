@@ -23,7 +23,7 @@ export function RemitentePanel({
   if (seccion === 'cotizar') {
     contenido = <CotizarEnvio />
   } else if (seccion === 'crear') {
-    contenido = <CrearEnvio onCrear={crear} />
+    contenido = <CrearEnvio token={token} onCrear={crear} />
   } else if (cargando) {
     contenido = (
       <section className="sender-shipments panel-state" role="status">

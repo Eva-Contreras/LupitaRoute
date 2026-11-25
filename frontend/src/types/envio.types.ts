@@ -176,6 +176,22 @@ export interface CotizarResponse {
   costoTotal: number
 }
 
+export interface TarifaItem {
+  tarifaId: number
+  nombreTarifa: string
+  pesoMinKg: number
+  pesoMaxKg: number
+  precioBase: number
+  precioPorKm: number
+}
+
+export interface ReceptorVerificado {
+  usuarioId: number
+  nombreCompleto: string
+  correo: string
+  rol: string
+}
+
 // POST api/Envios (CrearEnvioRequestDto)
 export interface NuevoEnvioRequest {
   correoReceptor: string

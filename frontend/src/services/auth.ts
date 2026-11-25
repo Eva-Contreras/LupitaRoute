@@ -12,12 +12,11 @@ function isRolNombre(value: unknown): value is RolNombre {
   return value === 'Remitente' || value === 'Repartidor' || value === 'Receptor'
 }
 
-function parseAuthResponse(value: unknown): AuthResponse | null {
-  if (!isRecord(value) || typeof value.token !== 'string' || !isRecord(value.usuario)) {
+function parseUsuario(value: unknown): Usuario | null {
+  if (!isRecord(value)) {
     return null
   }
-
-  const responseUsuario = value.usuario
+  const responseUsuario = value
   if (
     typeof responseUsuario.usuarioId !== 'number' ||
     typeof responseUsuario.nombreCompleto !== 'string' ||
@@ -31,7 +30,7 @@ function parseAuthResponse(value: unknown): AuthResponse | null {
     return null
   }
 
-  const usuario: Usuario = {
+  return {
     usuarioId: responseUsuario.usuarioId,
     nombreCompleto: responseUsuario.nombreCompleto,
     correo: responseUsuario.correo,
@@ -40,6 +39,16 @@ function parseAuthResponse(value: unknown): AuthResponse | null {
       : {}),
     rolId: responseUsuario.rolId,
     rol: responseUsuario.rol,
+  }
+}
+
+function parseAuthResponse(value: unknown): AuthResponse | null {
+  if (!isRecord(value) || typeof value.token !== 'string') {
+    return null
+  }
+  const usuario = parseUsuario(value.usuario)
+  if (!usuario) {
+    return null
   }
 
   return { token: value.token, usuario }
@@ -82,7 +91,46 @@ export async function login(correo: string, password: string): Promise<AuthRespo
     throw new Error('La API devolvió datos de sesión incompletos.')
   }
 
-  return authResponse
+  return {
+    ...authResponse,
+    usuario: await obtenerPerfil(authResponse.token),
+  }
+}
+
+export async function obtenerPerfil(token: string): Promise<Usuario> {
+  const apiUrl = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '')
+  if (!apiUrl) {
+    throw new Error('Falta configurar VITE_API_URL para conectar con la API.')
+  }
+
+  let response: Response
+  try {
+    response = await fetch(`${apiUrl}/api/Auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  } catch {
+    throw new Error('No se pudo consultar el perfil en la API.')
+  }
+
+  if (response.status === 401) {
+    throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.')
+  }
+  if (!response.ok) {
+    throw new Error(`No fue posible consultar el perfil (HTTP ${response.status}).`)
+  }
+
+  let payload: unknown
+  try {
+    payload = await response.json()
+  } catch {
+    throw new Error('La API devolvió un perfil no válido.')
+  }
+
+  const usuario = parseUsuario(payload)
+  if (!usuario) {
+    throw new Error('La API devolvió datos de perfil incompletos.')
+  }
+  return usuario
 }
 
 interface RegistroReceptor {

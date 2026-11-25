@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
-import { cotizarEnvio } from '../../services/envios'
-import type { CotizarResponse } from '../../types/envio.types'
+import { useEffect, useState, type FormEvent } from 'react'
+import { cotizarEnvio, ErrorApi, obtenerTarifas } from '../../services/envios'
+import type { CotizarResponse, TarifaItem } from '../../types/envio.types'
 
 const formatoMoneda = new Intl.NumberFormat('es-MX', {
   style: 'currency',
@@ -13,6 +13,32 @@ export function CotizarEnvio() {
   const [cotizando, setCotizando] = useState(false)
   const [resultado, setResultado] = useState<CotizarResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [tarifas, setTarifas] = useState<TarifaItem[]>([])
+  const [cargandoTarifas, setCargandoTarifas] = useState(true)
+  const [errorTarifas, setErrorTarifas] = useState<string | null>(null)
+
+  useEffect(() => {
+    let vigente = true
+    obtenerTarifas()
+      .then((resultadoTarifas) => {
+        if (vigente) setTarifas(resultadoTarifas)
+      })
+      .catch((caughtError: unknown) => {
+        if (vigente) {
+          setErrorTarifas(
+            caughtError instanceof ErrorApi
+              ? caughtError.message
+              : 'No se pudieron consultar las tarifas.',
+          )
+        }
+      })
+      .finally(() => {
+        if (vigente) setCargandoTarifas(false)
+      })
+    return () => {
+      vigente = false
+    }
+  }, [])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -118,6 +144,27 @@ export function CotizarEnvio() {
           </dl>
         </aside>
       </div>
+      <section className="quote-result" aria-labelledby="tarifas-title">
+        <h3 id="tarifas-title">Tarifas vigentes</h3>
+        {cargandoTarifas ? (
+          <p role="status">Cargando tarifas…</p>
+        ) : errorTarifas ? (
+          <p className="form-message--error" role="alert">{errorTarifas}</p>
+        ) : tarifas.length === 0 ? (
+          <p>No hay tarifas configuradas.</p>
+        ) : (
+          <ul className="tariff-list">
+            {tarifas.map((tarifa) => (
+              <li key={tarifa.tarifaId}>
+                <strong>{tarifa.nombreTarifa}</strong>
+                <span>{tarifa.pesoMinKg}–{tarifa.pesoMaxKg} kg</span>
+                <span>Base: {formatoMoneda.format(tarifa.precioBase)}</span>
+                <span>Por km: {formatoMoneda.format(tarifa.precioPorKm)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </section>
   )
 }

@@ -515,6 +515,28 @@ textarea {
   font-weight: 700;
 }
 
+.tariff-list {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tariff-list li {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-borde);
+  color: var(--color-secundario);
+  font-size: 0.85rem;
+}
+
+.tariff-list strong {
+  color: var(--color-principal);
+}
+
 .create-shipment-form {
   display: grid;
   gap: 24px;
