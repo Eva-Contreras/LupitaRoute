@@ -9,7 +9,7 @@ public interface IEnvioService
     Task ActualizarEstadoAsync(int envioId, int usuarioCambioId, string rolUsuario, ActualizarEstadoRequestDto dto);
     Task<EnvioDetalleDto?> RastrearConPermisosAsync(string codigoRastreo, int usuarioId);
     Task<EnvioRastreoPublicoDto?> RastrearPublicoAsync(string codigoRastreo);
-    Task<IEnumerable<EnvioDetalleDto>> ObtenerMisEnviosAsync(int usuarioId, string rol);
+    Task<EnviosPaginadosDto> ObtenerMisEnviosAsync(int usuarioId, string rol, FiltroEnviosQueryDto filtro);
     Task<EnvioDetalleDto> AsignarEnvioAsync(int envioId, int repartidorId, string? comentario = null);
     Task<IEnumerable<EnvioDetalleDto>> ObtenerDisponiblesAsync();
     Task<IEnumerable<dynamic>> ObtenerCatalogoEstadosAsync();

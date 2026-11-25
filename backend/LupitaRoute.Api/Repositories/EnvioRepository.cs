@@ -97,14 +97,38 @@ public class EnvioRepository : IEnvioRepository
         return envio;
     }
 
-    public async Task<IEnumerable<EnvioDetalleDto>> ObtenerEnviosPorUsuarioAsync(int usuarioId, string rol)
+    public async Task<EnviosPaginadosDto> ObtenerEnviosPorUsuarioAsync(int usuarioId, string rol, FiltroEnviosQueryDto filtro)
     {
         using var connection = new SqlConnection(_connectionString);
-        return await connection.QueryAsync<EnvioDetalleDto>(
+        using var multi = await connection.QueryMultipleAsync(
             "sp_ObtenerEnviosPorUsuario",
-            new { UsuarioId = usuarioId, Rol = rol },
+            new
+            {
+                UsuarioId = usuarioId,
+                Rol = rol,
+                filtro.EstadoId,
+                filtro.Busqueda,
+                filtro.Pagina,
+                filtro.TamanoPagina
+            },
             commandType: CommandType.StoredProcedure
         );
+
+        int totalRegistros = await multi.ReadFirstAsync<int>();
+        var items = (await multi.ReadAsync<EnvioDetalleDto>()).ToList();
+
+        int totalPaginas = totalRegistros == 0
+            ? 0
+            : (int)Math.Ceiling(totalRegistros / (double)filtro.TamanoPagina);
+
+        return new EnviosPaginadosDto
+        {
+            TotalRegistros = totalRegistros,
+            PaginaActual = filtro.Pagina,
+            TamanoPagina = filtro.TamanoPagina,
+            TotalPaginas = totalPaginas,
+            Items = items
+        };
     }
 
     public async Task<IEnumerable<EnvioDetalleDto>> ObtenerDisponiblesParaRepartidorAsync()
@@ -139,6 +163,7 @@ public class EnvioRepository : IEnvioRepository
             commandType: CommandType.StoredProcedure
         ) ?? throw new InvalidOperationException("No se pudo recuperar el código de rastreo tras asignar el envío.");
     }
+
     public async Task<ResumenEnviosDto> ObtenerResumenPorUsuarioAsync(int usuarioId, string rol)
     {
         using var connection = new SqlConnection(_connectionString);

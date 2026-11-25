@@ -126,3 +126,24 @@ public class ResumenEnviosDto
     public decimal MontoEntregado { get; set; }
     public List<ResumenEstadoItemDto> DesglosePorEstado { get; set; } = new();
 }
+
+public class FiltroEnviosQueryDto
+{
+    public int? EstadoId { get; set; }
+    public string? Busqueda { get; set; }
+
+    [Range(1, int.MaxValue, ErrorMessage = "La página debe ser mayor o igual a 1.")]
+    public int Pagina { get; set; } = 1;
+
+    [Range(1, 50, ErrorMessage = "El tamaño de página debe estar entre 1 y 50.")]
+    public int TamanoPagina { get; set; } = 10;
+}
+
+public class EnviosPaginadosDto
+{
+    public int TotalRegistros { get; set; }
+    public int PaginaActual { get; set; }
+    public int TamanoPagina { get; set; }
+    public int TotalPaginas { get; set; }
+    public List<EnvioDetalleDto> Items { get; set; } = new();
+}
