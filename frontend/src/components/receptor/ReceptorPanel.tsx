@@ -10,12 +10,12 @@ interface ReceptorPanelProps {
 
 export function ReceptorPanel({ token, onSesionExpirada }: ReceptorPanelProps) {
   const [seccion, setSeccion] = useState<'paquetes' | 'rastreo'>('paquetes')
-  const { envios, estados, cargando, error, reintentar, actualizarEnLista } =
+  const { envios, estados, controles, cargando, error, intento, reintentar, actualizarEnLista } =
     useEnvios(token)
 
   let contenido
   if (seccion === 'rastreo') {
-    contenido = <RastrearPaquete onActualizarLista={actualizarEnLista} />
+    contenido = <RastrearPaquete token={token} onActualizarLista={actualizarEnLista} />
   } else if (cargando) {
     contenido = (
       <section className="sender-shipments panel-state" role="status">
@@ -40,8 +40,12 @@ export function ReceptorPanel({ token, onSesionExpirada }: ReceptorPanelProps) {
   } else {
     contenido = (
       <MisPaquetes
+        token={token}
         envios={envios}
         estados={estados}
+        controles={controles}
+        actualizacion={intento}
+        onSesionExpirada={onSesionExpirada}
         onActualizar={actualizarEnLista}
         onRecargar={reintentar}
       />

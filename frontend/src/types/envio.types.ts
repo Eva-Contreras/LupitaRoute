@@ -66,6 +66,18 @@ export interface EstadoPaquete {
   descripcion: string
 }
 
+export interface ResumenEnvios {
+  rol: string
+  totalEnvios: number
+  enviosActivos: number
+  enviosEntregados: number
+  enviosCancelados: number
+  enviosConIncidencia: number
+  montoTotalOperado: number
+  montoEntregado: number
+  desglosePorEstado: { estadoId: number; estado: string; cantidad: number }[]
+}
+
 export interface Envio {
   envioId: number
   codigoRastreo: string
@@ -128,6 +140,21 @@ export interface HistorialRastreo {
   usuarioCambio: string
   comentario?: string
   fechaCambio: string
+}
+
+// Forma de GET api/Envios/rastreo/publico/{codigo} (EnvioRastreoPublicoDto)
+export interface HistorialPublico {
+  estado: string
+  comentario?: string
+  fechaCambio: string
+}
+
+export interface EnvioRastreoPublico {
+  codigoRastreo: string
+  estadoActualId: number
+  estadoActual: string
+  fechaCreacion: string
+  historial: HistorialPublico[]
 }
 
 export interface EnvioRastreo extends EnvioDetalle {

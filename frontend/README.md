@@ -77,6 +77,14 @@ actualiza el estado y vuelve a consultar “Mis entregas”. La asignación la r
 el procedimiento del backend; el frontend no puede evitar asignaciones
 simultáneas.
 
+Las listas de “Mis envíos”, “Mis entregas” y “Mis paquetes” usan los parámetros
+de `GET /api/Envios/mis-envios`: `pagina`, `tamanoPagina` (10), `estadoId` y
+`busqueda` se resuelven en el backend. El backend no admite filtros por fecha,
+así que “Creado desde/hasta” solo afecta a la página que se está viendo. Las
+paneles muestran un resumen general con `GET /api/Envios/resumen`; las métricas
+no dependen de los filtros de la lista. El selector de “Actualizar estado”
+carga hasta 50 entregas.
+
 El receptor consulta “Mis paquetes” con `GET /api/Envios/mis-envios`, filtra
 sus envíos y abre el detalle y el historial de cada uno. También puede rastrear
 por código usando el endpoint público, incluso si el envío no está asociado a

@@ -16,7 +16,7 @@ export function RemitentePanel({
   onSesionExpirada,
 }: RemitentePanelProps) {
   const [seccion, setSeccion] = useState<SeccionRemitente>('envios')
-  const { envios, estados, cargando, error, reintentar, crear, actualizarEnLista } =
+  const { envios, estados, controles, cargando, error, intento, reintentar, crear, actualizarEnLista } =
     useEnvios(token)
 
   let contenido
@@ -50,7 +50,7 @@ export function RemitentePanel({
       </section>
     )
   } else {
-    contenido = <MisEnvios envios={envios} estados={estados} onActualizar={actualizarEnLista} />
+    contenido = <MisEnvios token={token} envios={envios} estados={estados} controles={controles} actualizacion={intento} onSesionExpirada={onSesionExpirada} onActualizar={actualizarEnLista} />
   }
 
   return (

@@ -46,7 +46,7 @@ export function FiltrosEnvios({
         >
           <option value="">Todos los estados</option>
           {estados.map((item) => (
-            <option key={item.estadoId} value={item.nombre}>
+            <option key={item.estadoId} value={String(item.estadoId)}>
               {item.nombre}
             </option>
           ))}

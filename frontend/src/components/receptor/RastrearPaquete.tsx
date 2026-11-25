@@ -1,15 +1,19 @@
 import { useState, type FormEvent } from 'react'
 import { DetalleEnvio } from '../DetalleEnvio'
-import { rastrearEnvio } from '../../services/envios'
-import type { EnvioDetalle, EnvioRastreo } from '../../types/envio.types'
+import { EstadoEnvioBadge } from '../EstadoEnvioBadge'
+import { fechaLegible } from '../formatoEnvio'
+import { ErrorApi, rastrearEnvio, rastrearEnvioPublico } from '../../services/envios'
+import type { EnvioDetalle, EnvioRastreo, EnvioRastreoPublico } from '../../types/envio.types'
 
 interface RastrearPaqueteProps {
+  token: string
   onActualizarLista: (envio: EnvioDetalle) => void
 }
 
-export function RastrearPaquete({ onActualizarLista }: RastrearPaqueteProps) {
+export function RastrearPaquete({ token, onActualizarLista }: RastrearPaqueteProps) {
   const [codigo, setCodigo] = useState('')
   const [resultado, setResultado] = useState<EnvioRastreo | null>(null)
+  const [resultadoPublico, setResultadoPublico] = useState<EnvioRastreoPublico | null>(null)
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -24,9 +28,17 @@ export function RastrearPaquete({ onActualizarLista }: RastrearPaqueteProps) {
     setCargando(true)
     setError(null)
     try {
-      const envio = await rastrearEnvio(codigoLimpio)
-      setResultado(envio)
-      onActualizarLista(envio)
+      try {
+        const envio = await rastrearEnvio(token, codigoLimpio)
+        setResultado(envio)
+        onActualizarLista(envio)
+      } catch (caughtError: unknown) {
+        // 403: el envío existe pero no está asociado a la cuenta; se muestra la vista pública.
+        if (!(caughtError instanceof ErrorApi) || caughtError.estado !== 403) {
+          throw caughtError
+        }
+        setResultadoPublico(await rastrearEnvioPublico(codigoLimpio))
+      }
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'No se pudo consultar el envío.')
     } finally {
@@ -37,6 +49,7 @@ export function RastrearPaquete({ onActualizarLista }: RastrearPaqueteProps) {
   if (resultado) {
     return (
       <DetalleEnvio
+        token={token}
         envio={resultado}
         rastreoInicial={resultado}
         mostrarRemitente
@@ -46,6 +59,47 @@ export function RastrearPaquete({ onActualizarLista }: RastrearPaqueteProps) {
           setResultado(null)
         }}
       />
+    )
+  }
+
+  if (resultadoPublico) {
+    return (
+      <section className="sender-shipments" aria-labelledby="detalle-publico-title">
+        <header className="sender-section-header">
+          <div>
+            <h2 id="detalle-publico-title">Rastreo del envío</h2>
+            <p>{resultadoPublico.codigoRastreo}</p>
+          </div>
+          <button className="shipment-action" type="button" onClick={() => setResultadoPublico(null)}>
+            Volver a rastrear
+          </button>
+        </header>
+        <div className="shipment-detail">
+          <dl className="shipment-detail__grid">
+            <div><dt>Creado</dt><dd>{fechaLegible(resultadoPublico.fechaCreacion)}</dd></div>
+            <div>
+              <dt>Estado actual</dt>
+              <dd><EstadoEnvioBadge estado={resultadoPublico.estadoActual} /></dd>
+            </div>
+          </dl>
+          <section className="shipment-history" aria-labelledby="historial-publico-title">
+            <h3 id="historial-publico-title">Historial de estados</h3>
+            {resultadoPublico.historial.length === 0 ? (
+              <p>Aún no hay movimientos registrados.</p>
+            ) : (
+              <ol className="shipment-history__list">
+                {resultadoPublico.historial.map((movimiento, indice) => (
+                  <li key={`${movimiento.fechaCambio}-${indice}`}>
+                    <strong>{movimiento.estado}</strong>
+                    <span>{fechaLegible(movimiento.fechaCambio)}</span>
+                    {movimiento.comentario && <p>{movimiento.comentario}</p>}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        </div>
+      </section>
     )
   }
 

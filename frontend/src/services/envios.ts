@@ -1,4 +1,4 @@
-import type { CotizarRequest, CotizarResponse, EnvioDetalle, EnvioRastreo, EstadoPaquete, HistorialRastreo, NuevoEnvioRequest } from '../types/envio.types'
+import type { CotizarRequest, CotizarResponse, EnvioDetalle, EnvioRastreo, EnvioRastreoPublico, EstadoPaquete, HistorialPublico, HistorialRastreo, NuevoEnvioRequest, ResumenEnvios } from '../types/envio.types'
 
 export class ErrorApi extends Error {
   readonly estado: number | null
@@ -191,10 +191,97 @@ async function solicitar({
   return payload
 }
 
-// GET api/Envios/mis-envios (Repartidor: envíos asignados al usuario del token)
-export async function obtenerMisEnvios(token: string): Promise<EnvioDetalle[]> {
-  const payload = await solicitar({ ruta: '/api/Envios/mis-envios', token })
-  return lista(payload, leerEnvio)
+export const TAMANO_PAGINA = 10
+
+export interface ConsultaEnvios {
+  estadoId?: number
+  busqueda?: string
+  pagina?: number
+  tamanoPagina?: number
+}
+
+export interface PaginaEnvios {
+  items: EnvioDetalle[]
+  totalRegistros: number
+  paginaActual: number
+  totalPaginas: number
+}
+
+// GET api/Envios/mis-envios (EnviosPaginadosDto). Admite estadoId, busqueda,
+// pagina y tamanoPagina (1-50); el backend filtra según el rol del token.
+export async function consultarMisEnvios(
+  token: string,
+  { estadoId, busqueda, pagina = 1, tamanoPagina = TAMANO_PAGINA }: ConsultaEnvios = {},
+): Promise<PaginaEnvios> {
+  const parametros = new URLSearchParams({
+    pagina: String(pagina),
+    tamanoPagina: String(tamanoPagina),
+  })
+  if (estadoId !== undefined) {
+    parametros.set('estadoId', String(estadoId))
+  }
+  const termino = busqueda?.trim()
+  if (termino) {
+    parametros.set('busqueda', termino)
+  }
+
+  const payload = await solicitar({
+    ruta: `/api/Envios/mis-envios?${parametros.toString()}`,
+    token,
+  })
+  if (!esRegistro(payload)) {
+    throw new ErrorApi('La API devolvió una respuesta no válida.')
+  }
+  return {
+    items: lista(campo(payload, 'items'), leerEnvio),
+    totalRegistros: numero(campo(payload, 'totalRegistros')),
+    paginaActual: numero(campo(payload, 'paginaActual')),
+    totalPaginas: numero(campo(payload, 'totalPaginas')),
+  }
+}
+
+export async function obtenerResumen(token: string): Promise<ResumenEnvios> {
+  const payload = await solicitar({ ruta: '/api/Envios/resumen', token })
+  if (!esRegistro(payload)) {
+    throw new ErrorApi('La API devolvió un resumen no válido.')
+  }
+
+  const rol = campo(payload, 'rol')
+  const totalEnvios = campo(payload, 'totalEnvios')
+  const enviosActivos = campo(payload, 'enviosActivos')
+  const enviosEntregados = campo(payload, 'enviosEntregados')
+  const enviosCancelados = campo(payload, 'enviosCancelados')
+  const enviosConIncidencia = campo(payload, 'enviosConIncidencia')
+  const montoTotalOperado = campo(payload, 'montoTotalOperado')
+  const montoEntregado = campo(payload, 'montoEntregado')
+  const desglose = campo(payload, 'desglosePorEstado')
+  const esCantidad = (valor: unknown): valor is number =>
+    typeof valor === 'number' && Number.isInteger(valor) && valor >= 0
+  const esMonto = (valor: unknown): valor is number =>
+    typeof valor === 'number' && Number.isFinite(valor)
+
+  if (typeof rol !== 'string' || !esCantidad(totalEnvios) ||
+      !esCantidad(enviosActivos) || !esCantidad(enviosEntregados) ||
+      !esCantidad(enviosCancelados) || !esCantidad(enviosConIncidencia) ||
+      !esMonto(montoTotalOperado) || !esMonto(montoEntregado) || !Array.isArray(desglose)) {
+    throw new ErrorApi('La API devolvió un resumen no válido.')
+  }
+
+  const desglosePorEstado = desglose.map((item: unknown) => {
+    if (!esRegistro(item)) throw new ErrorApi('La API devolvió un resumen no válido.')
+    const estadoId = campo(item, 'estadoId')
+    const estado = campo(item, 'estado')
+    const cantidad = campo(item, 'cantidad')
+    if (!esCantidad(estadoId) || typeof estado !== 'string' || !esCantidad(cantidad)) {
+      throw new ErrorApi('La API devolvió un resumen no válido.')
+    }
+    return { estadoId, estado, cantidad }
+  })
+
+  return {
+    rol, totalEnvios, enviosActivos, enviosEntregados, enviosCancelados,
+    enviosConIncidencia, montoTotalOperado, montoEntregado, desglosePorEstado,
+  }
 }
 
 export async function obtenerEnviosDisponibles(token: string): Promise<EnvioDetalle[]> {
@@ -217,8 +304,45 @@ export async function obtenerEstados(): Promise<EstadoPaquete[]> {
   return lista(payload, leerEstado)
 }
 
-export async function rastrearEnvio(codigo: string): Promise<EnvioRastreo> {
-  const payload = await solicitar({ ruta: `/api/Envios/rastreo/${encodeURIComponent(codigo)}` })
+// GET api/Envios/rastreo/publico/{codigo} (sin sesión, datos limitados)
+export async function rastrearEnvioPublico(codigo: string): Promise<EnvioRastreoPublico> {
+  const payload = await solicitar({
+    ruta: `/api/Envios/rastreo/publico/${encodeURIComponent(codigo)}`,
+  })
+  if (!esRegistro(payload)) {
+    throw new ErrorApi('La API devolvió un envío no válido.')
+  }
+  const codigoRastreo = campo(payload, 'codigoRastreo')
+  const historial = campo(payload, 'historial')
+  if (typeof codigoRastreo !== 'string' || !Array.isArray(historial)) {
+    throw new ErrorApi('La API devolvió un envío no válido.')
+  }
+  const movimientos: HistorialPublico[] = historial.flatMap((item: unknown) => {
+    if (!esRegistro(item)) {
+      return []
+    }
+    const comentario = texto(campo(item, 'comentario'))
+    return [{
+      estado: texto(campo(item, 'estado')),
+      ...(comentario ? { comentario } : {}),
+      fechaCambio: texto(campo(item, 'fechaCambio')),
+    }]
+  })
+  return {
+    codigoRastreo,
+    estadoActualId: numero(campo(payload, 'estadoActualId')),
+    estadoActual: texto(campo(payload, 'estadoActual')),
+    fechaCreacion: texto(campo(payload, 'fechaCreacion')),
+    historial: movimientos,
+  }
+}
+
+// GET api/Envios/rastreo/{codigo} (requiere sesión y ser parte del envío)
+export async function rastrearEnvio(token: string, codigo: string): Promise<EnvioRastreo> {
+  const payload = await solicitar({
+    ruta: `/api/Envios/rastreo/${encodeURIComponent(codigo)}`,
+    token,
+  })
   const envio = leerEnvio(payload)
   if (!envio || !esRegistro(payload)) {
     throw new ErrorApi('La API devolvió un envío no válido.')
