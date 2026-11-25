@@ -159,4 +159,30 @@ public class EnviosController : ControllerBase
             return BadRequest(new { mensaje = ex.Message });
         }
     }
+    [HttpGet("tarifas")]
+    public async Task<IActionResult> ObtenerTarifas()
+    {
+        var tarifas = await _envioService.ObtenerTarifasAsync();
+        return Ok(tarifas);
+    }
+
+    [Authorize(Roles = "Remitente")]
+    [HttpGet("verificar-receptor")]
+    public async Task<IActionResult> VerificarReceptor([FromQuery] string correo)
+    {
+        try
+        {
+            int remitenteId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var receptor = await _envioService.VerificarReceptorAsync(correo, remitenteId);
+
+            if (receptor == null)
+                return NotFound(new { mensaje = "No existe ningún usuario registrado con ese correo." });
+
+            return Ok(receptor);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+    }
 }

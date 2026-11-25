@@ -46,10 +46,10 @@ public class EnvioRepository : IEnvioRepository
         );
     }
 
-    public async Task ActualizarEstadoAsync(int envioId, int nuevoEstadoId, int usuarioCambioId, string rolUsuario, string? comentario)
+    public async Task<string> ActualizarEstadoAsync(int envioId, int nuevoEstadoId, int usuarioCambioId, string rolUsuario, string? comentario)
     {
         using var connection = new SqlConnection(_connectionString);
-        await connection.ExecuteAsync(
+        return await connection.ExecuteScalarAsync<string>(
             "sp_ActualizarEstadoEnvio",
             new
             {
@@ -60,7 +60,7 @@ public class EnvioRepository : IEnvioRepository
                 Comentario = comentario
             },
             commandType: CommandType.StoredProcedure
-        );
+        ) ?? throw new InvalidOperationException("No se pudo recuperar el código de rastreo tras actualizar el estado.");
     }
 
     public async Task<EnvioDetalleDto?> ObtenerPorCodigoRastreoAsync(string codigoRastreo)
@@ -140,10 +140,10 @@ public class EnvioRepository : IEnvioRepository
         );
     }
 
-    public async Task<IEnumerable<dynamic>> ObtenerCatalogoEstadosAsync()
+    public async Task<IEnumerable<EstadoPaqueteDto>> ObtenerCatalogoEstadosAsync()
     {
         using var connection = new SqlConnection(_connectionString);
-        return await connection.QueryAsync(
+        return await connection.QueryAsync<EstadoPaqueteDto>(
             "sp_ObtenerEstadosPaquete",
             commandType: CommandType.StoredProcedure
         );
@@ -177,5 +177,24 @@ public class EnvioRepository : IEnvioRepository
         var desglose = await multi.ReadAsync<ResumenEstadoItemDto>();
         resumen.DesglosePorEstado = desglose.ToList();
         return resumen;
+    }
+
+    public async Task<IEnumerable<TarifaItemDto>> ObtenerTarifasAsync()
+    {
+        using var connection = new SqlConnection(_connectionString);
+        return await connection.QueryAsync<TarifaItemDto>(
+            "sp_ObtenerTarifasEnvio",
+            commandType: CommandType.StoredProcedure
+        );
+    }
+
+    public async Task<ReceptorVerificadoDto?> VerificarReceptorPorCorreoAsync(string correo)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        return await connection.QueryFirstOrDefaultAsync<ReceptorVerificadoDto>(
+            "sp_VerificarReceptorPorCorreo",
+            new { Correo = correo },
+            commandType: CommandType.StoredProcedure
+        );
     }
 }

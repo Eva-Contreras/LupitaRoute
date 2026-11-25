@@ -12,6 +12,8 @@ public interface IEnvioService
     Task<EnviosPaginadosDto> ObtenerMisEnviosAsync(int usuarioId, string rol, FiltroEnviosQueryDto filtro);
     Task<EnvioDetalleDto> AsignarEnvioAsync(int envioId, int repartidorId, string? comentario = null);
     Task<IEnumerable<EnvioDetalleDto>> ObtenerDisponiblesAsync();
-    Task<IEnumerable<dynamic>> ObtenerCatalogoEstadosAsync();
+    Task<IEnumerable<EstadoPaqueteDto>> ObtenerCatalogoEstadosAsync();
     Task<ResumenEnviosDto> ObtenerResumenAsync(int usuarioId, string rol);
+    Task<IEnumerable<TarifaItemDto>> ObtenerTarifasAsync();
+    Task<ReceptorVerificadoDto?> VerificarReceptorAsync(string correo, int remitenteId);
 }

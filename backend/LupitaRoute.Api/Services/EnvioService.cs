@@ -8,11 +8,13 @@ public class EnvioService : IEnvioService
 {
     private readonly IEnvioRepository _envioRepository;
     private readonly IAuthRepository _authRepository;
+    private readonly IEmailService _emailService;
 
-    public EnvioService(IEnvioRepository envioRepository, IAuthRepository authRepository)
+    public EnvioService(IEnvioRepository envioRepository, IAuthRepository authRepository, IEmailService emailService)
     {
         _envioRepository = envioRepository;
         _authRepository = authRepository;
+        _emailService = emailService;
     }
 
     public async Task<CotizarResponseDto> CotizarAsync(CotizarRequestDto dto)
@@ -60,13 +62,36 @@ public class EnvioService : IEnvioService
         };
 
         var creado = await _envioRepository.CrearEnvioAsync(nuevoEnvio);
-        return await _envioRepository.ObtenerPorCodigoRastreoAsync(creado.CodigoRastreo)
+        var detalle = await _envioRepository.ObtenerPorCodigoRastreoAsync(creado.CodigoRastreo)
             ?? throw new Exception("Error al recuperar el envío recién creado.");
+
+        await _emailService.EnviarNotificacionEnvioAsync(
+            receptor.Correo,
+            receptor.NombreCompleto,
+            detalle.CodigoRastreo,
+            "Nuevo envío registrado para ti",
+            $"Se ha registrado un envío con destino a <strong>{detalle.DireccionDestino}</strong> ({detalle.DescripcionPaquete})."
+        );
+
+        return detalle;
     }
 
     public async Task ActualizarEstadoAsync(int envioId, int usuarioCambioId, string rolUsuario, ActualizarEstadoRequestDto dto)
     {
-        await _envioRepository.ActualizarEstadoAsync(envioId, dto.NuevoEstadoId, usuarioCambioId, rolUsuario, dto.Comentario);
+        string codigoRastreo = await _envioRepository.ActualizarEstadoAsync(envioId, dto.NuevoEstadoId, usuarioCambioId, rolUsuario, dto.Comentario);
+        var detalle = await _envioRepository.ObtenerPorCodigoRastreoAsync(codigoRastreo);
+
+        if (detalle != null)
+        {
+            string textoExtra = string.IsNullOrWhiteSpace(dto.Comentario) ? "" : $" Comentario: <em>{dto.Comentario}</em>.";
+            string mensaje = $"Tu envío cambió al estado <strong>{detalle.EstadoActual}</strong>.{textoExtra}";
+
+            if (!string.IsNullOrWhiteSpace(detalle.ReceptorCorreo))
+                await _emailService.EnviarNotificacionEnvioAsync(detalle.ReceptorCorreo, detalle.Receptor, detalle.CodigoRastreo, $"Estado actualizado: {detalle.EstadoActual}", mensaje);
+
+            if (!string.IsNullOrWhiteSpace(detalle.RemitenteCorreo))
+                await _emailService.EnviarNotificacionEnvioAsync(detalle.RemitenteCorreo, detalle.Remitente, detalle.CodigoRastreo, $"Estado actualizado: {detalle.EstadoActual}", mensaje);
+        }
     }
 
     public async Task<EnvioDetalleDto?> RastrearConPermisosAsync(string codigoRastreo, int usuarioId)
@@ -99,7 +124,7 @@ public class EnvioService : IEnvioService
         return await _envioRepository.ObtenerDisponiblesParaRepartidorAsync();
     }
 
-    public async Task<IEnumerable<dynamic>> ObtenerCatalogoEstadosAsync()
+    public async Task<IEnumerable<EstadoPaqueteDto>> ObtenerCatalogoEstadosAsync()
     {
         return await _envioRepository.ObtenerCatalogoEstadosAsync();
     }
@@ -107,12 +132,42 @@ public class EnvioService : IEnvioService
     public async Task<EnvioDetalleDto> AsignarEnvioAsync(int envioId, int repartidorId, string? comentario = null)
     {
         string codigoRastreo = await _envioRepository.AsignarEnvioAsync(envioId, repartidorId, comentario);
-        return await _envioRepository.ObtenerPorCodigoRastreoAsync(codigoRastreo)
+        var detalle = await _envioRepository.ObtenerPorCodigoRastreoAsync(codigoRastreo)
             ?? throw new InvalidOperationException("No se encontró el envío después de asignarlo.");
+
+        string mensaje = $"El repartidor <strong>{detalle.Repartidor}</strong> ha tomado tu envío y pronto iniciará la recolección.";
+
+        if (!string.IsNullOrWhiteSpace(detalle.ReceptorCorreo))
+            await _emailService.EnviarNotificacionEnvioAsync(detalle.ReceptorCorreo, detalle.Receptor, detalle.CodigoRastreo, "Repartidor asignado", mensaje);
+
+        if (!string.IsNullOrWhiteSpace(detalle.RemitenteCorreo))
+            await _emailService.EnviarNotificacionEnvioAsync(detalle.RemitenteCorreo, detalle.Remitente, detalle.CodigoRastreo, "Repartidor asignado", mensaje);
+
+        return detalle;
     }
 
     public async Task<ResumenEnviosDto> ObtenerResumenAsync(int usuarioId, string rol)
     {
         return await _envioRepository.ObtenerResumenPorUsuarioAsync(usuarioId, rol);
+    }
+
+    public async Task<IEnumerable<TarifaItemDto>> ObtenerTarifasAsync()
+    {
+        return await _envioRepository.ObtenerTarifasAsync();
+    }
+
+    public async Task<ReceptorVerificadoDto?> VerificarReceptorAsync(string correo, int remitenteId)
+    {
+        if (string.IsNullOrWhiteSpace(correo))
+            throw new InvalidOperationException("Debes proporcionar un correo electrónico.");
+
+        var receptor = await _envioRepository.VerificarReceptorPorCorreoAsync(correo.Trim().ToLower());
+        if (receptor == null)
+            return null;
+
+        if (receptor.UsuarioId == remitenteId)
+            throw new InvalidOperationException("No puedes enviarte un paquete a ti mismo.");
+
+        return receptor;
     }
 }
