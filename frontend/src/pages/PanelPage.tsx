@@ -39,7 +39,9 @@ export function PanelPage({ usuario, token, onExit }: PanelPageProps) {
         {rol === 'Repartidor' && (
           <RepartidorPanel token={token} onSesionExpirada={onExit} />
         )}
-        {rol === 'Receptor' && <ReceptorPanel />}
+        {rol === 'Receptor' && (
+          <ReceptorPanel token={token} onSesionExpirada={onExit} />
+        )}
       </main>
     </div>
   )
