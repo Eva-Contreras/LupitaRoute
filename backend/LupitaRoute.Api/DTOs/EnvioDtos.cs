@@ -106,3 +106,23 @@ public class EnvioRastreoPublicoDto
     public DateTime FechaCreacion { get; set; }
     public List<HistorialPublicoItemDto> Historial { get; set; } = new();
 }
+
+public class ResumenEstadoItemDto
+{
+    public int EstadoId { get; set; }
+    public string Estado { get; set; } = string.Empty;
+    public int Cantidad { get; set; }
+}
+
+public class ResumenEnviosDto
+{
+    public string Rol { get; set; } = string.Empty;
+    public int TotalEnvios { get; set; }
+    public int EnviosActivos { get; set; }
+    public int EnviosEntregados { get; set; }
+    public int EnviosCancelados { get; set; }
+    public int EnviosConIncidencia { get; set; }
+    public decimal MontoTotalOperado { get; set; }
+    public decimal MontoEntregado { get; set; }
+    public List<ResumenEstadoItemDto> DesglosePorEstado { get; set; } = new();
+}

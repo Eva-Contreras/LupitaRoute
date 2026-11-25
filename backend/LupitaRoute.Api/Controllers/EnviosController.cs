@@ -141,4 +141,22 @@ public class EnviosController : ControllerBase
             return BadRequest(new { mensaje = ex.Message });
         }
     }
+    
+    [Authorize]
+    [HttpGet("resumen")]
+    public async Task<IActionResult> ObtenerResumen()
+    {
+        try
+        {
+            int usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            string rol = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+
+            var resumen = await _envioService.ObtenerResumenAsync(usuarioId, rol);
+            return Ok(resumen);
+        }
+        catch (SqlException ex) when (ex.Number >= 50000)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+    }
 }

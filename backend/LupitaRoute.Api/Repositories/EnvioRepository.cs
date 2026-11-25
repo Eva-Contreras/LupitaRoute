@@ -139,4 +139,18 @@ public class EnvioRepository : IEnvioRepository
             commandType: CommandType.StoredProcedure
         ) ?? throw new InvalidOperationException("No se pudo recuperar el código de rastreo tras asignar el envío.");
     }
+    public async Task<ResumenEnviosDto> ObtenerResumenPorUsuarioAsync(int usuarioId, string rol)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        using var multi = await connection.QueryMultipleAsync(
+            "sp_ObtenerResumenEnvios",
+            new { UsuarioId = usuarioId, Rol = rol },
+            commandType: CommandType.StoredProcedure
+        );
+
+        var resumen = await multi.ReadFirstAsync<ResumenEnviosDto>();
+        var desglose = await multi.ReadAsync<ResumenEstadoItemDto>();
+        resumen.DesglosePorEstado = desglose.ToList();
+        return resumen;
+    }
 }

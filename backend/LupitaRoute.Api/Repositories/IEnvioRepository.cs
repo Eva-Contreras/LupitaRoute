@@ -14,4 +14,5 @@ public interface IEnvioRepository
     Task<string> AsignarEnvioAsync(int envioId, int repartidorId, string? comentario);
     Task<IEnumerable<EnvioDetalleDto>> ObtenerDisponiblesParaRepartidorAsync();
     Task<IEnumerable<dynamic>> ObtenerCatalogoEstadosAsync();
+    Task<ResumenEnviosDto> ObtenerResumenPorUsuarioAsync(int usuarioId, string rol);
 }
