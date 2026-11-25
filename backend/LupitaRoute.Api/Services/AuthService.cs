@@ -21,21 +21,22 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> RegistrarAsync(RegisterRequestDto dto)
     {
-        var existente = await _authRepository.ObtenerPorCorreoAsync(dto.Correo);
+        string correoNormalizado = dto.Correo.Trim().ToLower();
+        var existente = await _authRepository.ObtenerPorCorreoAsync(correoNormalizado);
         if (existente != null)
             throw new InvalidOperationException("El correo ya está registrado.");
 
         var nuevoUsuario = new Usuario
         {
             NombreCompleto = dto.NombreCompleto,
-            Correo = dto.Correo.Trim().ToLower(),
+            Correo = correoNormalizado,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             Telefono = dto.Telefono,
             RolId = dto.RolId
         };
 
         await _authRepository.RegistrarUsuarioAsync(nuevoUsuario);
-        var usuarioCreado = await _authRepository.ObtenerPorCorreoAsync(nuevoUsuario.Correo)
+        var usuarioCreado = await _authRepository.ObtenerPorCorreoAsync(correoNormalizado)
             ?? throw new Exception("Error al recuperar el usuario recién registrado.");
 
         return GenerarRespuestaAuth(usuarioCreado);

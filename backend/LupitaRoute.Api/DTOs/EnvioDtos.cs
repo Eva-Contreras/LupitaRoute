@@ -81,6 +81,8 @@ public class EnvioDetalleDto
     public decimal CostoTotal { get; set; }
     public int EstadoActualId { get; set; }
     public string EstadoActual { get; set; } = string.Empty;
+    public string? RemitenteCorreo { get; set; }
+    public string? ReceptorCorreo { get; set; }
     public DateTime FechaCreacion { get; set; }
     public List<HistorialItemDto> Historial { get; set; } = new();
 }
@@ -146,4 +148,29 @@ public class EnviosPaginadosDto
     public int TamanoPagina { get; set; }
     public int TotalPaginas { get; set; }
     public List<EnvioDetalleDto> Items { get; set; } = new();
+}
+
+public class EstadoPaqueteDto
+{
+    public int EstadoId { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public string? Descripcion { get; set; }
+}
+
+public class TarifaItemDto
+{
+    public int TarifaId { get; set; }
+    public string NombreTarifa { get; set; } = string.Empty;
+    public decimal PesoMinKg { get; set; }
+    public decimal PesoMaxKg { get; set; }
+    public decimal PrecioBase { get; set; }
+    public decimal PrecioPorKm { get; set; }
+}
+
+public class ReceptorVerificadoDto
+{
+    public int UsuarioId { get; set; }
+    public string NombreCompleto { get; set; } = string.Empty;
+    public string Correo { get; set; } = string.Empty;
+    public string Rol { get; set; } = string.Empty;
 }

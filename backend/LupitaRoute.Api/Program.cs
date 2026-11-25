@@ -50,6 +50,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEnvioRepository, EnvioRepository>();
 builder.Services.AddScoped<IEnvioService, EnvioService>();
 
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 var app = builder.Build();
 
 // 5. Pipeline HTTP
