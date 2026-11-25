@@ -2,6 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LupitaRoute.Api.DTOs;
 
+public class AsignarEnvioRequestDto
+{
+    public string? Comentario { get; set; }
+}
+
 public class CotizarRequestDto
 {
     [Range(0.01, 50.0, ErrorMessage = "El peso debe estar entre 0.01 kg y 50.0 kg.")]
@@ -62,8 +67,11 @@ public class EnvioDetalleDto
 {
     public int EnvioId { get; set; }
     public string CodigoRastreo { get; set; } = string.Empty;
+    public int RemitenteId { get; set; }
     public string Remitente { get; set; } = string.Empty;
+    public int? RepartidorId { get; set; }
     public string? Repartidor { get; set; }
+    public int ReceptorId { get; set; }
     public string Receptor { get; set; } = string.Empty;
     public string DireccionOrigen { get; set; } = string.Empty;
     public string DireccionDestino { get; set; } = string.Empty;
@@ -75,4 +83,26 @@ public class EnvioDetalleDto
     public string EstadoActual { get; set; } = string.Empty;
     public DateTime FechaCreacion { get; set; }
     public List<HistorialItemDto> Historial { get; set; } = new();
+}
+
+public class EnvioCreadoDto
+{
+    public int EnvioId { get; set; }
+    public string CodigoRastreo { get; set; } = string.Empty;
+}
+
+public class HistorialPublicoItemDto
+{
+    public string Estado { get; set; } = string.Empty;
+    public string? Comentario { get; set; }
+    public DateTime FechaCambio { get; set; }
+}
+
+public class EnvioRastreoPublicoDto
+{
+    public string CodigoRastreo { get; set; } = string.Empty;
+    public int EstadoActualId { get; set; }
+    public string EstadoActual { get; set; } = string.Empty;
+    public DateTime FechaCreacion { get; set; }
+    public List<HistorialPublicoItemDto> Historial { get; set; } = new();
 }

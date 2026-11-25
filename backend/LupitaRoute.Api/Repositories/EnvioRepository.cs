@@ -26,14 +26,13 @@ public class EnvioRepository : IEnvioRepository
         );
     }
 
-    public async Task<int> CrearEnvioAsync(Envio envio)
+    public async Task<EnvioCreadoDto> CrearEnvioAsync(Envio envio)
     {
         using var connection = new SqlConnection(_connectionString);
-        return await connection.ExecuteScalarAsync<int>(
+        return await connection.QuerySingleAsync<EnvioCreadoDto>(
             "sp_CrearEnvio",
             new
             {
-                envio.CodigoRastreo,
                 envio.RemitenteId,
                 envio.ReceptorId,
                 envio.DireccionOrigen,
@@ -81,6 +80,23 @@ public class EnvioRepository : IEnvioRepository
         return envio;
     }
 
+    public async Task<EnvioRastreoPublicoDto?> ObtenerPublicoPorCodigoRastreoAsync(string codigoRastreo)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        using var multi = await connection.QueryMultipleAsync(
+            "sp_ObtenerEnvioPublicoPorCodigo",
+            new { CodigoRastreo = codigoRastreo },
+            commandType: CommandType.StoredProcedure
+        );
+
+        var envio = await multi.ReadFirstOrDefaultAsync<EnvioRastreoPublicoDto>();
+        if (envio == null) return null;
+
+        var historial = await multi.ReadAsync<HistorialPublicoItemDto>();
+        envio.Historial = historial.ToList();
+        return envio;
+    }
+
     public async Task<IEnumerable<EnvioDetalleDto>> ObtenerEnviosPorUsuarioAsync(int usuarioId, string rol)
     {
         using var connection = new SqlConnection(_connectionString);
@@ -107,5 +123,20 @@ public class EnvioRepository : IEnvioRepository
             "sp_ObtenerEstadosPaquete",
             commandType: CommandType.StoredProcedure
         );
+    }
+
+    public async Task<string> AsignarEnvioAsync(int envioId, int repartidorId, string? comentario)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        return await connection.ExecuteScalarAsync<string>(
+            "sp_AsignarEnvio",
+            new
+            {
+                EnvioId = envioId,
+                RepartidorId = repartidorId,
+                Comentario = comentario
+            },
+            commandType: CommandType.StoredProcedure
+        ) ?? throw new InvalidOperationException("No se pudo recuperar el código de rastreo tras asignar el envío.");
     }
 }

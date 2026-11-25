@@ -1,6 +1,11 @@
 @LupitaRoute.Api_HostAddress = http://localhost:5159
+@token_repartidor = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJoZXJoQG5maWtnayIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlJlbWl0ZW50ZSIsImV4cCI6MTc5NTYwNDI1NSwiaXNzIjoiTHVwaXRhUm91dGVBcGkiLCJhdWQiOiJMdXBpdGFSb3V0ZUNsaWVudCJ9.i6xEXwqmSnwq6H-urUPL2AEMqWIyTkUXr_T2iWnoHSc
 
-GET {{LupitaRoute.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Asignar envío disponible al repartidor autenticado
+PUT {{LupitaRoute.Api_HostAddress}}/api/Envios/1/asignar
+Authorization: Bearer {{token_repartidor}}
+Content-Type: application/json
 
-###
+{
+  "comentario": "Paquete asignado, saliendo hacia punto de recolección."
+}

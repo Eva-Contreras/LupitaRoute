@@ -38,17 +38,17 @@ public class EnvioService : IEnvioService
         var receptor = await _authRepository.ObtenerPorCorreoAsync(dto.CorreoReceptor.Trim().ToLower())
             ?? throw new InvalidOperationException("No se encontró ningún usuario registrado con el correo del receptor.");
 
+        if (receptor.UsuarioId == remitenteId)
+            throw new InvalidOperationException("No puedes registrarte a ti mismo como receptor del envío.");
+
         var cotizacion = await CotizarAsync(new CotizarRequestDto
         {
             PesoKg = dto.PesoKg,
             DistanciaKm = dto.DistanciaKm
         });
 
-        string codigoRastreo = $"LUP-{DateTime.UtcNow.Year}-{Random.Shared.Next(1000, 9999)}";
-
         var nuevoEnvio = new Envio
         {
-            CodigoRastreo = codigoRastreo,
             RemitenteId = remitenteId,
             ReceptorId = receptor.UsuarioId,
             DireccionOrigen = dto.DireccionOrigen,
@@ -59,8 +59,8 @@ public class EnvioService : IEnvioService
             CostoTotal = cotizacion.CostoTotal
         };
 
-        await _envioRepository.CrearEnvioAsync(nuevoEnvio);
-        return await _envioRepository.ObtenerPorCodigoRastreoAsync(codigoRastreo)
+        var creado = await _envioRepository.CrearEnvioAsync(nuevoEnvio);
+        return await _envioRepository.ObtenerPorCodigoRastreoAsync(creado.CodigoRastreo)
             ?? throw new Exception("Error al recuperar el envío recién creado.");
     }
 
@@ -69,9 +69,24 @@ public class EnvioService : IEnvioService
         await _envioRepository.ActualizarEstadoAsync(envioId, dto.NuevoEstadoId, usuarioCambioId, rolUsuario, dto.Comentario);
     }
 
-    public async Task<EnvioDetalleDto?> RastrearAsync(string codigoRastreo)
+    public async Task<EnvioDetalleDto?> RastrearConPermisosAsync(string codigoRastreo, int usuarioId)
     {
-        return await _envioRepository.ObtenerPorCodigoRastreoAsync(codigoRastreo.Trim().ToUpper());
+        var envio = await _envioRepository.ObtenerPorCodigoRastreoAsync(codigoRastreo.Trim().ToUpper());
+        if (envio == null) return null;
+
+        bool esInvolucrado = envio.RemitenteId == usuarioId
+            || envio.ReceptorId == usuarioId
+            || (envio.RepartidorId.HasValue && envio.RepartidorId.Value == usuarioId);
+
+        if (!esInvolucrado)
+            throw new UnauthorizedAccessException("No tienes permiso para ver los detalles privados de este envío.");
+
+        return envio;
+    }
+
+    public async Task<EnvioRastreoPublicoDto?> RastrearPublicoAsync(string codigoRastreo)
+    {
+        return await _envioRepository.ObtenerPublicoPorCodigoRastreoAsync(codigoRastreo.Trim().ToUpper());
     }
 
     public async Task<IEnumerable<EnvioDetalleDto>> ObtenerMisEnviosAsync(int usuarioId, string rol)
@@ -87,5 +102,12 @@ public class EnvioService : IEnvioService
     public async Task<IEnumerable<dynamic>> ObtenerCatalogoEstadosAsync()
     {
         return await _envioRepository.ObtenerCatalogoEstadosAsync();
+    }
+
+    public async Task<EnvioDetalleDto> AsignarEnvioAsync(int envioId, int repartidorId, string? comentario = null)
+    {
+        string codigoRastreo = await _envioRepository.AsignarEnvioAsync(envioId, repartidorId, comentario);
+        return await _envioRepository.ObtenerPorCodigoRastreoAsync(codigoRastreo)
+            ?? throw new InvalidOperationException("No se encontró el envío después de asignarlo.");
     }
 }

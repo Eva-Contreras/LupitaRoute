@@ -74,10 +74,30 @@ public class EnviosController : ControllerBase
         return Ok(envios);
     }
 
+    [Authorize]
     [HttpGet("rastreo/{codigo}")]
     public async Task<IActionResult> Rastrear(string codigo)
     {
-        var envio = await _envioService.RastrearAsync(codigo);
+        try
+        {
+            int usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var envio = await _envioService.RastrearConPermisosAsync(codigo, usuarioId);
+            if (envio == null)
+                return NotFound(new { mensaje = $"No se encontró ningún envío con el código {codigo}." });
+
+            return Ok(envio);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { mensaje = ex.Message });
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpGet("rastreo/publico/{codigo}")]
+    public async Task<IActionResult> RastrearPublico(string codigo)
+    {
+        var envio = await _envioService.RastrearPublicoAsync(codigo);
         if (envio == null)
             return NotFound(new { mensaje = $"No se encontró ningún envío con el código {codigo}." });
 
@@ -97,6 +117,26 @@ public class EnviosController : ControllerBase
             return Ok(new { mensaje = "Estado actualizado correctamente." });
         }
         catch (SqlException ex) when (ex.Number >= 50000)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+    }
+
+    [Authorize(Roles = "Repartidor")]
+    [HttpPut("{envioId:int}/asignar")]
+    public async Task<IActionResult> AsignarEnvio(int envioId, [FromBody] AsignarEnvioRequestDto? dto = null)
+    {
+        try
+        {
+            int repartidorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var envioActualizado = await _envioService.AsignarEnvioAsync(envioId, repartidorId, dto?.Comentario);
+            return Ok(envioActualizado);
+        }
+        catch (SqlException ex) when (ex.Number >= 50000)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+        catch (InvalidOperationException ex)
         {
             return BadRequest(new { mensaje = ex.Message });
         }
