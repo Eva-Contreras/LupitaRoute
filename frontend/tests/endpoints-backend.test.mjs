@@ -119,3 +119,34 @@ test('carga el perfil vigente del backend al iniciar sesión', async () => {
     await server.close()
   }
 })
+
+test('registra cada tipo de usuario con su rol y comunica errores del backend', async () => {
+  const fetchOriginal = globalThis.fetch
+  const urlOriginal = process.env.VITE_API_URL
+  process.env.VITE_API_URL = 'https://example.invalid'
+  const server = await createServer({ server: { middlewareMode: true, hmr: false }, appType: 'custom' })
+
+  try {
+    const { registrarUsuario } = await server.ssrLoadModule('/src/services/auth.ts')
+    const datos = { nombreCompleto: 'Ana', correo: 'ana@example.com', password: '123456' }
+
+    for (const [rol, rolId] of [['Remitente', 1], ['Repartidor', 2], ['Receptor', 3]]) {
+      globalThis.fetch = async (url, opciones) => {
+        assert.equal(url, 'https://example.invalid/api/Auth/register')
+        assert.equal(opciones.method, 'POST')
+        assert.deepEqual(JSON.parse(opciones.body), { ...datos, rolId })
+        return new Response('{}', { status: 200 })
+      }
+      await registrarUsuario(datos, rol)
+    }
+
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ mensaje: 'El correo ya está registrado.' }), { status: 400 })
+    await assert.rejects(registrarUsuario(datos, 'Remitente'), /El correo ya está registrado/)
+  } finally {
+    globalThis.fetch = fetchOriginal
+    if (urlOriginal === undefined) delete process.env.VITE_API_URL
+    else process.env.VITE_API_URL = urlOriginal
+    await server.close()
+  }
+})

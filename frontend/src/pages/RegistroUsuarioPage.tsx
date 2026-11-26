@@ -1,13 +1,16 @@
 import { useState, type FormEvent } from 'react'
 import { BrandName } from '../components/BrandName'
-import { registrarReceptor } from '../services/auth'
+import { registrarUsuario } from '../services/auth'
+import type { RolNombre } from '../types/auth.types'
 
-interface RegistroReceptorPageProps {
+interface RegistroUsuarioPageProps {
+  rol: RolNombre
+  enPanel?: boolean
   onVolver: () => void
   onRegistrado: () => void
 }
 
-export function RegistroReceptorPage({ onVolver, onRegistrado }: RegistroReceptorPageProps) {
+export function RegistroUsuarioPage({ rol, enPanel = false, onVolver, onRegistrado }: RegistroUsuarioPageProps) {
   const [nombre, setNombre] = useState('')
   const [correo, setCorreo] = useState('')
   const [telefono, setTelefono] = useState('')
@@ -30,12 +33,12 @@ export function RegistroReceptorPage({ onVolver, onRegistrado }: RegistroRecepto
 
     setCargando(true)
     try {
-      await registrarReceptor({
+      await registrarUsuario({
         nombreCompleto: nombre.trim(),
         correo: correo.trim().toLowerCase(),
         password,
         ...(telefono.trim() ? { telefono: telefono.trim() } : {}),
-      })
+      }, rol)
       onRegistrado()
     } catch (caughtError) {
       setError(
@@ -49,11 +52,11 @@ export function RegistroReceptorPage({ onVolver, onRegistrado }: RegistroRecepto
   }
 
   return (
-    <main className="login-page">
+    <div className={enPanel ? 'login-page registro-en-panel' : 'login-page'}>
       <form className="login-card" onSubmit={handleSubmit}>
         <header className="login-header">
           <h1><BrandName /></h1>
-          <p>Crea tu cuenta de receptor</p>
+          <p>{enPanel ? 'Crear cuenta' : 'Crea tu cuenta'} de {rol.toLowerCase()}</p>
         </header>
         <div className="login-field">
           <label htmlFor="registro-nombre">Nombre completo</label>
@@ -88,10 +91,12 @@ export function RegistroReceptorPage({ onVolver, onRegistrado }: RegistroRecepto
           {cargando ? 'Creando cuenta…' : 'Crear cuenta'}
         </button>
         <p className="login-switch">
-          ¿Ya tienes cuenta?{' '}
-          <button type="button" onClick={onVolver} disabled={cargando}>Inicia sesión</button>
+          {!enPanel && '¿Ya tienes cuenta? '}
+          <button type="button" onClick={onVolver} disabled={cargando}>
+            {enPanel ? 'Volver al panel' : 'Inicia sesión'}
+          </button>
         </p>
       </form>
-    </main>
+    </div>
   )
 }

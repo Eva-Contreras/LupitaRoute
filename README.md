@@ -46,6 +46,12 @@ La documentación visual de la arquitectura se encuentra en la carpeta `docs/mod
 
 ---
 
+## Registro de usuarios
+
+Los receptores pueden registrarse desde el inicio de sesión. Los remitentes y repartidores pueden crear cuentas de su mismo rol desde el botón superior de su panel, sin cerrar su sesión.
+
+Esta separación se aplica únicamente en la interfaz: la API actual permite registrar cualquiera de los tres roles sin autenticación. Para hacerla efectiva como medida de seguridad, es necesario restringir el registro también en el backend.
+
 ## Ejecución Local
 
 ### Requisitos previos
