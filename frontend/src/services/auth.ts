@@ -133,14 +133,20 @@ export async function obtenerPerfil(token: string): Promise<Usuario> {
   return usuario
 }
 
-interface RegistroReceptor {
+interface RegistroUsuario {
   nombreCompleto: string
   correo: string
   password: string
   telefono?: string
 }
 
-export async function registrarReceptor(datos: RegistroReceptor): Promise<void> {
+const rolesRegistro: Record<RolNombre, number> = {
+  Remitente: 1,
+  Repartidor: 2,
+  Receptor: 3,
+}
+
+export async function registrarUsuario(datos: RegistroUsuario, rol: RolNombre): Promise<void> {
   const apiUrl = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '')
   if (!apiUrl) {
     throw new Error('Falta configurar VITE_API_URL para conectar con la API.')
@@ -151,7 +157,7 @@ export async function registrarReceptor(datos: RegistroReceptor): Promise<void> 
     response = await fetch(`${apiUrl}/api/Auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...datos, rolId: 3 }),
+      body: JSON.stringify({ ...datos, rolId: rolesRegistro[rol] }),
     })
   } catch {
     throw new Error('No se pudo conectar con la API. Verifica que esté disponible.')

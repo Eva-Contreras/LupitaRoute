@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { LoginPage } from './pages/LoginPage'
 import { PanelPage } from './pages/PanelPage'
-import { RegistroReceptorPage } from './pages/RegistroReceptorPage'
+import { RegistroUsuarioPage } from './pages/RegistroUsuarioPage'
 import type { AuthResponse } from './types/auth.types'
 
 export default function App() {
@@ -18,13 +18,16 @@ export default function App() {
           onExit={() => setSession(null)}
         />
       ) : registrando ? (
-        <RegistroReceptorPage
-          onVolver={() => setRegistrando(false)}
-          onRegistrado={() => {
-            setRegistroCompletado(true)
-            setRegistrando(false)
-          }}
-        />
+        <main>
+          <RegistroUsuarioPage
+            rol="Receptor"
+            onVolver={() => setRegistrando(false)}
+            onRegistrado={() => {
+              setRegistroCompletado(true)
+              setRegistrando(false)
+            }}
+          />
+        </main>
       ) : (
         <LoginPage
           onAccept={(nuevaSesion) => {
