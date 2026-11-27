@@ -99,7 +99,7 @@ textarea {
 .login-header h1 {
   margin: 0;
   font-size: 1.9rem;
-  letter-spacing: -0.04em;
+  line-height: 1.2;
 }
 
 .brand-name {
@@ -361,7 +361,7 @@ textarea {
 }
 
 .sender-nav-item span {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
 }
 
 .sender-shipments {
@@ -662,7 +662,7 @@ textarea {
 .courier-pickup__label,
 .courier-pickup__code span {
   color: var(--color-secundario);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -902,7 +902,7 @@ textarea {
 .shipment-table th {
   color: var(--color-secundario);
   background-color: var(--color-superficie);
-  font-size: 0.73rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -1005,7 +1005,7 @@ textarea {
 .shipment-table .status-badge {
   display: inline-block;
   padding: 6px 9px;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .status-badge.status-badge--creado {
@@ -1105,7 +1105,7 @@ textarea {
 }
 
 .delivery-code {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .status-badge {
@@ -1351,7 +1351,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 14px;
+  padding: 14px 22px;
   color: var(--color-secundario);
   font-size: 0.82rem;
 }
@@ -1359,6 +1359,21 @@ textarea {
 .shipment-pagination__actions {
   display: flex;
   gap: 8px;
+}
+
+.sender-shipments > .quote-demo-note {
+  margin: 0;
+  padding: 0 22px 12px;
+}
+
+.shipment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sender-shipments > .quote-result {
+  margin: 0 22px 22px;
 }
 
 .shipment-action:disabled {

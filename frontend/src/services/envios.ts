@@ -1,236 +1,93 @@
 import type { CotizarRequest, CotizarResponse, EnvioDetalle, EnvioRastreo, EnvioRastreoPublico, EstadoPaquete, HistorialPublico, HistorialRastreo, NuevoEnvioRequest, ReceptorVerificado, ResumenEnvios, TarifaItem } from '../types/envio.types'
+import { solicitar } from './http'
+import { leer, leerLista } from './lector'
 
-export class ErrorApi extends Error {
-  readonly estado: number | null
+export { ErrorApi } from './http'
 
-  constructor(mensaje: string, estado: number | null = null) {
-    super(mensaje)
-    this.name = 'ErrorApi'
-    this.estado = estado
-  }
-}
-
-type Registro = Record<string, unknown>
-
-function esRegistro(value: unknown): value is Registro {
-  return typeof value === 'object' && value !== null
-}
-
-// El backend devuelve camelCase en los DTOs y PascalCase en los `dynamic`
-// (catálogo de estados), así que se acepta cualquiera de los dos.
-function campo(registro: Registro, nombre: string): unknown {
-  if (nombre in registro) {
-    return registro[nombre]
-  }
-  return registro[nombre.charAt(0).toUpperCase() + nombre.slice(1)]
-}
-
-function texto(value: unknown): string {
-  return typeof value === 'string' ? value : ''
-}
-
-function numero(value: unknown): number {
-  const convertido = typeof value === 'number' ? value : Number(value)
-  return Number.isFinite(convertido) ? convertido : 0
-}
-
-function leerEstado(value: unknown): EstadoPaquete | null {
-  if (!esRegistro(value)) {
-    return null
-  }
-  const estadoId = campo(value, 'estadoId')
-  const nombre = campo(value, 'nombre')
-  if (typeof estadoId !== 'number' || typeof nombre !== 'string') {
-    return null
-  }
+function leerEstado(value: unknown): EstadoPaquete {
+  const lector = leer(value, 'un estado')
   return {
-    estadoId,
-    nombre,
-    descripcion: texto(campo(value, 'descripcion')),
+    estadoId: lector.numero('estadoId'),
+    nombre: lector.texto('nombre'),
+    descripcion: lector.textoOpcional('descripcion') ?? '',
   }
 }
 
-function leerTarifa(value: unknown): TarifaItem | null {
-  if (!esRegistro(value)) {
-    return null
-  }
-  const tarifaId = campo(value, 'tarifaId')
-  const nombreTarifa = campo(value, 'nombreTarifa')
-  const pesoMinKg = campo(value, 'pesoMinKg')
-  const pesoMaxKg = campo(value, 'pesoMaxKg')
-  const precioBase = campo(value, 'precioBase')
-  const precioPorKm = campo(value, 'precioPorKm')
-  if (
-    typeof tarifaId !== 'number' ||
-    typeof nombreTarifa !== 'string' ||
-    typeof pesoMinKg !== 'number' ||
-    typeof pesoMaxKg !== 'number' ||
-    typeof precioBase !== 'number' ||
-    typeof precioPorKm !== 'number'
-  ) {
-    return null
-  }
-  return { tarifaId, nombreTarifa, pesoMinKg, pesoMaxKg, precioBase, precioPorKm }
-}
-
-function leerReceptorVerificado(value: unknown): ReceptorVerificado | null {
-  if (!esRegistro(value)) {
-    return null
-  }
-  const usuarioId = campo(value, 'usuarioId')
-  const nombreCompleto = campo(value, 'nombreCompleto')
-  const correo = campo(value, 'correo')
-  const rol = campo(value, 'rol')
-  if (
-    typeof usuarioId !== 'number' ||
-    typeof nombreCompleto !== 'string' ||
-    typeof correo !== 'string' ||
-    typeof rol !== 'string'
-  ) {
-    return null
-  }
-  return { usuarioId, nombreCompleto, correo, rol }
-}
-
-function leerEnvio(value: unknown): EnvioDetalle | null {
-  if (!esRegistro(value)) {
-    return null
-  }
-  const envioId = campo(value, 'envioId')
-  const codigoRastreo = campo(value, 'codigoRastreo')
-  if (typeof envioId !== 'number' || typeof codigoRastreo !== 'string') {
-    return null
-  }
-  const repartidor = texto(campo(value, 'repartidor'))
+function leerTarifa(value: unknown): TarifaItem {
+  const lector = leer(value, 'una tarifa')
   return {
-    envioId,
-    codigoRastreo,
-    remitente: texto(campo(value, 'remitente')),
+    tarifaId: lector.numero('tarifaId'),
+    nombreTarifa: lector.texto('nombreTarifa'),
+    pesoMinKg: lector.numero('pesoMinKg'),
+    pesoMaxKg: lector.numero('pesoMaxKg'),
+    precioBase: lector.numero('precioBase'),
+    precioPorKm: lector.numero('precioPorKm'),
+  }
+}
+
+function leerReceptorVerificado(value: unknown): ReceptorVerificado {
+  const lector = leer(value, 'un receptor')
+  return {
+    usuarioId: lector.numero('usuarioId'),
+    nombreCompleto: lector.texto('nombreCompleto'),
+    correo: lector.texto('correo'),
+    rol: lector.texto('rol'),
+  }
+}
+
+function leerEnvio(value: unknown): EnvioDetalle {
+  const lector = leer(value, 'un envío')
+  const repartidor = lector.textoOpcional('repartidor')
+  return {
+    envioId: lector.numero('envioId'),
+    codigoRastreo: lector.texto('codigoRastreo'),
+    remitente: lector.texto('remitente'),
     ...(repartidor ? { repartidor } : {}),
-    receptor: texto(campo(value, 'receptor')),
-    direccionOrigen: texto(campo(value, 'direccionOrigen')),
-    direccionDestino: texto(campo(value, 'direccionDestino')),
-    descripcionPaquete: texto(campo(value, 'descripcionPaquete')),
-    pesoKg: numero(campo(value, 'pesoKg')),
-    distanciaKm: numero(campo(value, 'distanciaKm')),
-    costoTotal: numero(campo(value, 'costoTotal')),
-    estadoActualId: numero(campo(value, 'estadoActualId')),
-    estadoActual: texto(campo(value, 'estadoActual')),
-    fechaCreacion: texto(campo(value, 'fechaCreacion')),
+    receptor: lector.texto('receptor'),
+    direccionOrigen: lector.texto('direccionOrigen'),
+    direccionDestino: lector.texto('direccionDestino'),
+    descripcionPaquete: lector.texto('descripcionPaquete'),
+    pesoKg: lector.numero('pesoKg'),
+    distanciaKm: lector.numero('distanciaKm'),
+    costoTotal: lector.numero('costoTotal'),
+    estadoActualId: lector.numero('estadoActualId'),
+    estadoActual: lector.texto('estadoActual'),
+    fechaCreacion: lector.texto('fechaCreacion'),
   }
 }
 
-function leerCotizacion(value: unknown): CotizarResponse | null {
-  if (!esRegistro(value)) {
-    return null
-  }
-  const costoTotal = campo(value, 'costoTotal')
-  if (typeof costoTotal !== 'number') {
-    return null
-  }
+function leerCotizacion(value: unknown): CotizarResponse {
+  const lector = leer(value, 'una cotización')
   return {
-    nombreTarifa: texto(campo(value, 'nombreTarifa')),
-    pesoKg: numero(campo(value, 'pesoKg')),
-    distanciaKm: numero(campo(value, 'distanciaKm')),
-    precioBase: numero(campo(value, 'precioBase')),
-    precioPorKm: numero(campo(value, 'precioPorKm')),
-    costoTotal,
+    nombreTarifa: lector.texto('nombreTarifa'),
+    pesoKg: lector.numero('pesoKg'),
+    distanciaKm: lector.numero('distanciaKm'),
+    precioBase: lector.numero('precioBase'),
+    precioPorKm: lector.numero('precioPorKm'),
+    costoTotal: lector.numero('costoTotal'),
   }
 }
 
-function lista<T>(payload: unknown, leer: (item: unknown) => T | null): T[] {
-  if (!Array.isArray(payload)) {
-    throw new ErrorApi('La API devolvió una respuesta no válida.')
+function leerMovimientoPublico(value: unknown): HistorialPublico {
+  const lector = leer(value, 'un movimiento')
+  const comentario = lector.textoOpcional('comentario')
+  return {
+    estado: lector.texto('estado'),
+    ...(comentario ? { comentario } : {}),
+    fechaCambio: lector.texto('fechaCambio'),
   }
-  return payload.flatMap((item) => {
-    const leido = leer(item)
-    return leido ? [leido] : []
-  })
 }
 
-// El backend responde { mensaje } en los errores de negocio y, cuando falla una
-// validación de [Range]/[Required], un objeto { errors: { Campo: [mensajes] } }.
-function mensajeDeError(payload: unknown): string {
-  if (!esRegistro(payload)) {
-    return ''
+function leerMovimiento(value: unknown): HistorialRastreo {
+  const lector = leer(value, 'un movimiento')
+  const comentario = lector.textoOpcional('comentario')
+  return {
+    historialId: lector.numero('historialId'),
+    estado: lector.texto('estado'),
+    usuarioCambio: lector.texto('usuarioCambio'),
+    ...(comentario ? { comentario } : {}),
+    fechaCambio: lector.texto('fechaCambio'),
   }
-  const mensaje = texto(payload.mensaje)
-  if (mensaje) {
-    return mensaje
-  }
-  if (esRegistro(payload.errors)) {
-    for (const valor of Object.values(payload.errors)) {
-      if (Array.isArray(valor)) {
-        const primero = valor.find((item) => typeof item === 'string')
-        if (typeof primero === 'string') {
-          return primero
-        }
-      }
-    }
-  }
-  return ''
-}
-
-interface Solicitud {
-  ruta: string
-  metodo?: 'GET' | 'POST' | 'PUT'
-  token?: string
-  cuerpo?: unknown
-}
-
-async function solicitar({
-  ruta,
-  metodo = 'GET',
-  token,
-  cuerpo,
-}: Solicitud): Promise<unknown> {
-  const apiUrl = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '')
-  if (!apiUrl) {
-    throw new ErrorApi('Falta configurar VITE_API_URL para conectar con la API.')
-  }
-
-  const headers: Record<string, string> = {}
-  if (token) {
-    headers.Authorization = `Bearer ${token}`
-  }
-  if (cuerpo !== undefined) {
-    headers['Content-Type'] = 'application/json'
-  }
-
-  let response: Response
-  try {
-    response = await fetch(`${apiUrl}${ruta}`, {
-      method: metodo,
-      headers,
-      ...(cuerpo !== undefined ? { body: JSON.stringify(cuerpo) } : {}),
-    })
-  } catch {
-    throw new ErrorApi('No se pudo conectar con la API. Verifica que esté disponible.')
-  }
-
-  if (response.status === 401) {
-    throw new ErrorApi('Tu sesión expiró. Vuelve a iniciar sesión.', 401)
-  }
-  if (response.status === 403) {
-    throw new ErrorApi('Tu usuario no tiene permiso para esta acción.', 403)
-  }
-
-  let payload: unknown
-  try {
-    payload = await response.json()
-  } catch {
-    payload = null
-  }
-
-  if (!response.ok) {
-    const mensaje = mensajeDeError(payload)
-    throw new ErrorApi(
-      mensaje || `La API respondió con un error (HTTP ${response.status}).`,
-      response.status,
-    )
-  }
-
-  return payload
 }
 
 export const TAMANO_PAGINA = 10
@@ -271,94 +128,56 @@ export async function consultarMisEnvios(
     ruta: `/api/Envios/mis-envios?${parametros.toString()}`,
     token,
   })
-  if (!esRegistro(payload)) {
-    throw new ErrorApi('La API devolvió una respuesta no válida.')
-  }
+  const lector = leer(payload, 'una página de envíos')
   return {
-    items: lista(campo(payload, 'items'), leerEnvio),
-    totalRegistros: numero(campo(payload, 'totalRegistros')),
-    paginaActual: numero(campo(payload, 'paginaActual')),
-    totalPaginas: numero(campo(payload, 'totalPaginas')),
+    items: lector.lista('items').map(leerEnvio),
+    totalRegistros: lector.cantidad('totalRegistros'),
+    paginaActual: lector.cantidad('paginaActual'),
+    totalPaginas: lector.cantidad('totalPaginas'),
   }
 }
 
+// GET api/Envios/resumen
 export async function obtenerResumen(token: string): Promise<ResumenEnvios> {
   const payload = await solicitar({ ruta: '/api/Envios/resumen', token })
-  if (!esRegistro(payload)) {
-    throw new ErrorApi('La API devolvió un resumen no válido.')
-  }
-
-  const rol = campo(payload, 'rol')
-  const totalEnvios = campo(payload, 'totalEnvios')
-  const enviosActivos = campo(payload, 'enviosActivos')
-  const enviosEntregados = campo(payload, 'enviosEntregados')
-  const enviosCancelados = campo(payload, 'enviosCancelados')
-  const enviosConIncidencia = campo(payload, 'enviosConIncidencia')
-  const montoTotalOperado = campo(payload, 'montoTotalOperado')
-  const montoEntregado = campo(payload, 'montoEntregado')
-  const desglose = campo(payload, 'desglosePorEstado')
-  const esCantidad = (valor: unknown): valor is number =>
-    typeof valor === 'number' && Number.isInteger(valor) && valor >= 0
-  const esMonto = (valor: unknown): valor is number =>
-    typeof valor === 'number' && Number.isFinite(valor)
-
-  if (typeof rol !== 'string' || !esCantidad(totalEnvios) ||
-      !esCantidad(enviosActivos) || !esCantidad(enviosEntregados) ||
-      !esCantidad(enviosCancelados) || !esCantidad(enviosConIncidencia) ||
-      !esMonto(montoTotalOperado) || !esMonto(montoEntregado) || !Array.isArray(desglose)) {
-    throw new ErrorApi('La API devolvió un resumen no válido.')
-  }
-
-  const desglosePorEstado = desglose.map((item: unknown) => {
-    if (!esRegistro(item)) throw new ErrorApi('La API devolvió un resumen no válido.')
-    const estadoId = campo(item, 'estadoId')
-    const estado = campo(item, 'estado')
-    const cantidad = campo(item, 'cantidad')
-    if (!esCantidad(estadoId) || typeof estado !== 'string' || !esCantidad(cantidad)) {
-      throw new ErrorApi('La API devolvió un resumen no válido.')
-    }
-    return { estadoId, estado, cantidad }
-  })
+  const lector = leer(payload, 'un resumen')
 
   return {
-    rol, totalEnvios, enviosActivos, enviosEntregados, enviosCancelados,
-    enviosConIncidencia, montoTotalOperado, montoEntregado, desglosePorEstado,
+    rol: lector.texto('rol'),
+    totalEnvios: lector.cantidad('totalEnvios'),
+    enviosActivos: lector.cantidad('enviosActivos'),
+    enviosEntregados: lector.cantidad('enviosEntregados'),
+    enviosCancelados: lector.cantidad('enviosCancelados'),
+    enviosConIncidencia: lector.cantidad('enviosConIncidencia'),
+    montoTotalOperado: lector.numero('montoTotalOperado'),
+    montoEntregado: lector.numero('montoEntregado'),
+    desglosePorEstado: lector.lista('desglosePorEstado').map((item) => {
+      const desglose = leer(item, 'un resumen')
+      return {
+        estadoId: desglose.cantidad('estadoId'),
+        estado: desglose.texto('estado'),
+        cantidad: desglose.cantidad('cantidad'),
+      }
+    }),
   }
 }
 
+// GET api/Envios/disponibles (solo Repartidor)
 export async function obtenerEnviosDisponibles(token: string): Promise<EnvioDetalle[]> {
   const payload = await solicitar({ ruta: '/api/Envios/disponibles', token })
-  if (!Array.isArray(payload)) {
-    throw new ErrorApi('La API devolvió una lista de envíos disponibles no válida.')
-  }
-  return payload.map((item: unknown) => {
-    const envio = leerEnvio(item)
-    if (!envio) {
-      throw new ErrorApi('La API devolvió un envío disponible no válido.')
-    }
-    return envio
-  })
+  return leerLista(payload, 'envíos disponibles', leerEnvio)
 }
 
 // GET api/Envios/estados (catálogo, sp_ObtenerEstadosPaquete)
 export async function obtenerEstados(): Promise<EstadoPaquete[]> {
   const payload = await solicitar({ ruta: '/api/Envios/estados' })
-  return lista(payload, leerEstado)
+  return leerLista(payload, 'estados', leerEstado)
 }
 
 // GET api/Envios/tarifas
 export async function obtenerTarifas(): Promise<TarifaItem[]> {
   const payload = await solicitar({ ruta: '/api/Envios/tarifas' })
-  if (!Array.isArray(payload)) {
-    throw new ErrorApi('La API devolvió una lista de tarifas no válida.')
-  }
-  return payload.map((item: unknown) => {
-    const tarifa = leerTarifa(item)
-    if (!tarifa) {
-      throw new ErrorApi('La API devolvió una tarifa no válida.')
-    }
-    return tarifa
-  })
+  return leerLista(payload, 'tarifas', leerTarifa)
 }
 
 // GET api/Envios/verificar-receptor (solo Remitente)
@@ -371,11 +190,7 @@ export async function verificarReceptor(
     ruta: `/api/Envios/verificar-receptor?${parametros.toString()}`,
     token,
   })
-  const receptor = leerReceptorVerificado(payload)
-  if (!receptor) {
-    throw new ErrorApi('La API devolvió un receptor no válido.')
-  }
-  return receptor
+  return leerReceptorVerificado(payload)
 }
 
 // GET api/Envios/rastreo/publico/{codigo} (sin sesión, datos limitados)
@@ -383,31 +198,13 @@ export async function rastrearEnvioPublico(codigo: string): Promise<EnvioRastreo
   const payload = await solicitar({
     ruta: `/api/Envios/rastreo/publico/${encodeURIComponent(codigo)}`,
   })
-  if (!esRegistro(payload)) {
-    throw new ErrorApi('La API devolvió un envío no válido.')
-  }
-  const codigoRastreo = campo(payload, 'codigoRastreo')
-  const historial = campo(payload, 'historial')
-  if (typeof codigoRastreo !== 'string' || !Array.isArray(historial)) {
-    throw new ErrorApi('La API devolvió un envío no válido.')
-  }
-  const movimientos: HistorialPublico[] = historial.flatMap((item: unknown) => {
-    if (!esRegistro(item)) {
-      return []
-    }
-    const comentario = texto(campo(item, 'comentario'))
-    return [{
-      estado: texto(campo(item, 'estado')),
-      ...(comentario ? { comentario } : {}),
-      fechaCambio: texto(campo(item, 'fechaCambio')),
-    }]
-  })
+  const lector = leer(payload, 'un envío')
   return {
-    codigoRastreo,
-    estadoActualId: numero(campo(payload, 'estadoActualId')),
-    estadoActual: texto(campo(payload, 'estadoActual')),
-    fechaCreacion: texto(campo(payload, 'fechaCreacion')),
-    historial: movimientos,
+    codigoRastreo: lector.texto('codigoRastreo'),
+    estadoActualId: lector.numero('estadoActualId'),
+    estadoActual: lector.texto('estadoActual'),
+    fechaCreacion: lector.texto('fechaCreacion'),
+    historial: lector.lista('historial').map(leerMovimientoPublico),
   }
 }
 
@@ -417,43 +214,10 @@ export async function rastrearEnvio(token: string, codigo: string): Promise<Envi
     ruta: `/api/Envios/rastreo/${encodeURIComponent(codigo)}`,
     token,
   })
-  const envio = leerEnvio(payload)
-  if (!envio || !esRegistro(payload)) {
-    throw new ErrorApi('La API devolvió un envío no válido.')
+  return {
+    ...leerEnvio(payload),
+    historial: leer(payload, 'un envío').lista('historial').map(leerMovimiento),
   }
-
-  const historial = campo(payload, 'historial')
-  if (!Array.isArray(historial)) {
-    throw new ErrorApi('La API devolvió un historial no válido.')
-  }
-  const movimientos: HistorialRastreo[] = historial.map((item: unknown) => {
-    if (!esRegistro(item)) {
-      throw new ErrorApi('La API devolvió un historial no válido.')
-    }
-    const historialId = campo(item, 'historialId')
-    const estado = campo(item, 'estado')
-    const usuarioCambio = campo(item, 'usuarioCambio')
-    const comentario = campo(item, 'comentario')
-    const fechaCambio = campo(item, 'fechaCambio')
-    if (
-      typeof historialId !== 'number' ||
-      typeof estado !== 'string' ||
-      typeof usuarioCambio !== 'string' ||
-      typeof fechaCambio !== 'string' ||
-      (comentario != null && typeof comentario !== 'string')
-    ) {
-      throw new ErrorApi('La API devolvió un historial no válido.')
-    }
-    return {
-      historialId,
-      estado,
-      usuarioCambio,
-      ...(typeof comentario === 'string' && comentario ? { comentario } : {}),
-      fechaCambio,
-    }
-  })
-
-  return { ...envio, historial: movimientos }
 }
 
 // PUT api/Envios/{envioId}/estado (sp_ActualizarEstadoEnvio)
@@ -478,27 +242,27 @@ export async function asignarEnvio(token: string, envioId: number): Promise<Envi
     metodo: 'PUT',
     token,
   })
-  const envio = leerEnvio(payload)
-  if (!envio) {
-    throw new ErrorApi('La API devolvió un envío asignado no válido.')
-  }
-  return envio
+  return leerEnvio(payload)
+}
+
+// El backend exige que el envío esté asignado al repartidor antes de cambiar su estado.
+export async function asignarYRegistrarRecoleccion(
+  token: string,
+  envioId: number,
+  estadoRecolectadoId: number,
+): Promise<void> {
+  await asignarEnvio(token, envioId)
+  await actualizarEstado(token, envioId, estadoRecolectadoId, null)
 }
 
 // POST api/Envios/cotizar (público)
-export async function cotizarEnvio(
-  solicitud: CotizarRequest,
-): Promise<CotizarResponse> {
+export async function cotizarEnvio(solicitud: CotizarRequest): Promise<CotizarResponse> {
   const payload = await solicitar({
     ruta: '/api/Envios/cotizar',
     metodo: 'POST',
     cuerpo: solicitud,
   })
-  const cotizacion = leerCotizacion(payload)
-  if (!cotizacion) {
-    throw new ErrorApi('La API devolvió una cotización no válida.')
-  }
-  return cotizacion
+  return leerCotizacion(payload)
 }
 
 // POST api/Envios (solo Remitente)
@@ -512,9 +276,5 @@ export async function crearEnvio(
     token,
     cuerpo: solicitud,
   })
-  const envio = leerEnvio(payload)
-  if (!envio) {
-    throw new ErrorApi('La API devolvió un envío no válido.')
-  }
-  return envio
+  return leerEnvio(payload)
 }

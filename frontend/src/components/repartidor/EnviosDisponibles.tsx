@@ -1,13 +1,38 @@
 import { useEffect, useState } from 'react'
-import { asignarEnvio, ErrorApi, obtenerEnviosDisponibles } from '../../services/envios'
+import { aErrorVista, type ErrorVista } from '../../hooks/useListaEnvios'
+import { asignarEnvio, obtenerEnviosDisponibles } from '../../services/envios'
 import type { EnvioDetalle } from '../../types/envio.types'
 import { EstadoEnvioBadge } from '../EstadoEnvioBadge'
+import { ConfirmarRecoleccion } from './ConfirmarRecoleccion'
 
 interface EnviosDisponiblesProps {
   token: string
   onSesionExpirada: () => void
   onRecolectar: (envioId: number, codigo: string) => Promise<void>
   registrando: boolean
+}
+
+function AvisoError({ error, onSesionExpirada, onReintentar }: {
+  error: ErrorVista
+  onSesionExpirada: () => void
+  onReintentar?: () => void
+}) {
+  return (
+    <div className="panel-state" role="alert">
+      <p className="panel-state__error">{error.mensaje}</p>
+      {error.sesionExpirada ? (
+        <button className="shipment-action" type="button" onClick={onSesionExpirada}>
+          Volver a iniciar sesión
+        </button>
+      ) : (
+        onReintentar && (
+          <button className="shipment-action" type="button" onClick={onReintentar}>
+            Reintentar
+          </button>
+        )
+      )}
+    </div>
+  )
 }
 
 export function EnviosDisponibles({
@@ -18,19 +43,13 @@ export function EnviosDisponibles({
 }: EnviosDisponiblesProps) {
   const [envios, setEnvios] = useState<EnvioDetalle[]>([])
   const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState<{ mensaje: string; sesionExpirada: boolean } | null>(null)
+  const [error, setError] = useState<ErrorVista | null>(null)
   const [intento, setIntento] = useState(0)
   const [seleccionado, setSeleccionado] = useState<EnvioDetalle | null>(null)
   const [asignandoEnvioId, setAsignandoEnvioId] = useState<number | null>(null)
   const [mensajeAsignacion, setMensajeAsignacion] = useState<string | null>(null)
-  const [errorAsignacion, setErrorAsignacion] = useState<{
-    mensaje: string
-    sesionExpirada: boolean
-  } | null>(null)
-  const [errorRecoleccion, setErrorRecoleccion] = useState<{
-    mensaje: string
-    sesionExpirada: boolean
-  } | null>(null)
+  const [errorAsignacion, setErrorAsignacion] = useState<ErrorVista | null>(null)
+  const [errorRecoleccion, setErrorRecoleccion] = useState<ErrorVista | null>(null)
 
   useEffect(() => {
     let vigente = true
@@ -43,10 +62,7 @@ export function EnviosDisponibles({
       })
       .catch((caughtError: unknown) => {
         if (vigente) {
-          setError({
-            mensaje: caughtError instanceof Error ? caughtError.message : 'No se pudieron consultar los envíos disponibles.',
-            sesionExpirada: caughtError instanceof ErrorApi && caughtError.estado === 401,
-          })
+          setError(aErrorVista(caughtError, 'No se pudieron consultar los envíos disponibles.'))
         }
       })
       .finally(() => {
@@ -71,12 +87,7 @@ export function EnviosDisponibles({
       setMensajeAsignacion(`El envío ${envio.codigoRastreo} quedó asignado a tu cuenta.`)
       recargar()
     } catch (caughtError: unknown) {
-      setErrorAsignacion({
-        mensaje: caughtError instanceof Error
-          ? caughtError.message
-          : 'No se pudo asignar el envío.',
-        sesionExpirada: caughtError instanceof ErrorApi && caughtError.estado === 401,
-      })
+      setErrorAsignacion(aErrorVista(caughtError, 'No se pudo asignar el envío.'))
     } finally {
       setAsignandoEnvioId(null)
     }
@@ -88,97 +99,24 @@ export function EnviosDisponibles({
     try {
       await onRecolectar(seleccionado.envioId, seleccionado.codigoRastreo)
     } catch (caughtError: unknown) {
-      setErrorRecoleccion({
-        mensaje: caughtError instanceof Error ? caughtError.message : 'No se pudo registrar la recolección.',
-        sesionExpirada: caughtError instanceof ErrorApi && caughtError.estado === 401,
-      })
+      setErrorRecoleccion(aErrorVista(caughtError, 'No se pudo registrar la recolección.'))
     }
   }
 
   if (seleccionado) {
     return (
-      <section className="sender-shipments courier-pickup" aria-labelledby="confirmar-recoleccion-title">
-        <header className="courier-pickup__header">
-          <div className="courier-pickup__heading">
-            <span className="courier-pickup__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m3 7 9-4 9 4v10l-9 4-9-4V7Z" />
-                <path d="m3 7 9 4 9-4M12 11v10M7.5 5l9 4" />
-              </svg>
-            </span>
-            <div>
-              <span className="courier-pickup__eyebrow">Recolección de paquete</span>
-              <h2 id="confirmar-recoleccion-title">Registrar recolección</h2>
-              <p>Revisa los datos antes de continuar.</p>
-            </div>
-          </div>
-          <div className="courier-pickup__code">
-            <span>Código de rastreo</span>
-            <strong>{seleccionado.codigoRastreo}</strong>
-          </div>
-        </header>
-        <div className="courier-confirmation">
-          <div className="courier-pickup__details">
-            <div className="courier-pickup__recipient">
-              <span className="courier-pickup__label">Receptor</span>
-              <strong>{seleccionado.receptor}</strong>
-            </div>
-            <div className="courier-pickup__route">
-              <h3>Ruta del envío</h3>
-              <dl className="courier-pickup__stops">
-                <div className="courier-pickup__stop">
-                  <dt>Dirección de origen</dt>
-                  <dd>{seleccionado.direccionOrigen}</dd>
-                </div>
-                <div className="courier-pickup__stop">
-                  <dt>Dirección de entrega</dt>
-                  <dd>{seleccionado.direccionDestino}</dd>
-                </div>
-              </dl>
-            </div>
-          </div>
-          <div className="courier-pickup__notice">
-            <span className="courier-pickup__notice-icon" aria-hidden="true">!</span>
-            <div>
-              <strong>Antes de confirmar</strong>
-              <p>Confirma solo si ya recolectaste el paquete. Se cambiará su estado a Recolectado y se intentará asignarlo a ti.</p>
-            </div>
-          </div>
-          {errorRecoleccion && (
-            <div className="courier-pickup__error" role="alert">
-              <p className="panel-state__error">{errorRecoleccion.mensaje}</p>
-              <p>Si la solicitud llegó al servidor, revisa Mis entregas antes de volver a intentarlo.</p>
-              {errorRecoleccion.sesionExpirada && (
-                <button className="shipment-action" type="button" onClick={onSesionExpirada}>
-                  Volver a iniciar sesión
-                </button>
-              )}
-            </div>
-          )}
-          <div className="courier-confirmation__actions">
-            <button
-              className="quote-submit courier-pickup__confirm"
-              type="button"
-              disabled={registrando || errorRecoleccion?.sesionExpirada}
-              onClick={confirmarRecoleccion}
-            >
-              {registrando ? 'Registrando…' : 'Confirmar recolección'}
-            </button>
-            <button
-              className="shipment-action courier-pickup__back"
-              type="button"
-              disabled={registrando}
-              onClick={() => {
-                setSeleccionado(null)
-                setErrorRecoleccion(null)
-                recargar()
-              }}
-            >
-              Volver a disponibles
-            </button>
-          </div>
-        </div>
-      </section>
+      <ConfirmarRecoleccion
+        envio={seleccionado}
+        error={errorRecoleccion}
+        registrando={registrando}
+        onConfirmar={confirmarRecoleccion}
+        onSesionExpirada={onSesionExpirada}
+        onVolver={() => {
+          setSeleccionado(null)
+          setErrorRecoleccion(null)
+          recargar()
+        }}
+      />
     )
   }
 
@@ -194,27 +132,11 @@ export function EnviosDisponibles({
         </button>
       </header>
       {mensajeAsignacion && <p className="quote-demo-note" role="status">{mensajeAsignacion}</p>}
-      {errorAsignacion && (
-        <div className="panel-state" role="alert">
-          <p className="panel-state__error">{errorAsignacion.mensaje}</p>
-          {errorAsignacion.sesionExpirada && (
-            <button className="shipment-action" type="button" onClick={onSesionExpirada}>
-              Volver a iniciar sesión
-            </button>
-          )}
-        </div>
-      )}
+      {errorAsignacion && <AvisoError error={errorAsignacion} onSesionExpirada={onSesionExpirada} />}
       {cargando ? (
         <div className="panel-state" role="status"><p>Cargando envíos disponibles…</p></div>
       ) : error ? (
-        <div className="panel-state" role="alert">
-          <p className="panel-state__error">{error.mensaje}</p>
-          {error.sesionExpirada ? (
-            <button className="shipment-action" type="button" onClick={onSesionExpirada}>Volver a iniciar sesión</button>
-          ) : (
-            <button className="shipment-action" type="button" onClick={recargar}>Reintentar</button>
-          )}
-        </div>
+        <AvisoError error={error} onSesionExpirada={onSesionExpirada} onReintentar={recargar} />
       ) : (
         <div className="shipment-table-scroll">
           <table className="shipment-table">
@@ -239,23 +161,25 @@ export function EnviosDisponibles({
                   <td>{envio.descripcionPaquete} · {envio.pesoKg} kg</td>
                   <td><EstadoEnvioBadge estado={envio.estadoActual} /></td>
                   <td>
-                    <button
-                      className="shipment-action"
-                      type="button"
-                      onClick={() => setSeleccionado(envio)}
-                      disabled={asignandoEnvioId !== null}
-                      aria-label={`Registrar recolección del envío ${envio.codigoRastreo}`}
-                    >
-                      Registrar recolección
-                    </button>
-                    <button
-                      className="shipment-action"
-                      type="button"
-                      onClick={() => asignarAmi(envio)}
-                      disabled={asignandoEnvioId !== null || registrando}
-                    >
-                      {asignandoEnvioId === envio.envioId ? 'Asignando…' : 'Asignar a mí'}
-                    </button>
+                    <div className="shipment-actions">
+                      <button
+                        className="shipment-action"
+                        type="button"
+                        onClick={() => setSeleccionado(envio)}
+                        disabled={asignandoEnvioId !== null}
+                        aria-label={`Registrar recolección del envío ${envio.codigoRastreo}`}
+                      >
+                        Registrar recolección
+                      </button>
+                      <button
+                        className="shipment-action"
+                        type="button"
+                        onClick={() => asignarAmi(envio)}
+                        disabled={asignandoEnvioId !== null || registrando}
+                      >
+                        {asignandoEnvioId === envio.envioId ? 'Asignando…' : 'Asignar a mí'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

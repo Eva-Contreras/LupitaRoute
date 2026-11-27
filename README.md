@@ -11,8 +11,8 @@ Plataforma web integral para la gestión, cotización y rastreo en tiempo real d
 ---
 
 ## Enlaces Desplegados
-* **Aplicación Web (Frontend):** `https://pendiente-despliegue-frontend.vercel.app` *(actualizar al desplegar)*
-* **API REST (Backend):** `https://pendiente-despliegue-api.onrender.com` *(actualizar al desplegar)*
+- **Aplicación Web (Frontend):** https://lupita-route.vercel.app
+- **API REST (Backend):** https://lupitaroutes.runasp.net
 
 ---
 
