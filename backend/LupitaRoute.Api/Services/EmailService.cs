@@ -1,19 +1,15 @@
-using MailKit;
-using MailKit.Net.Smtp;
-using MailKit.Security;
-using MimeKit;
+using System.Net.Http.Json;
 
 namespace LupitaRoute.Api.Services;
 
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _config;
-    private readonly ILogger<EmailService> _logger;
+    private static readonly HttpClient _httpClient = new();
 
-    public EmailService(IConfiguration config, ILogger<EmailService> logger)
+    public EmailService(IConfiguration config)
     {
         _config = config;
-        _logger = logger;
     }
 
     public async Task EnviarNotificacionEnvioAsync(
@@ -23,44 +19,57 @@ public class EmailService : IEmailService
         string tituloEvento,
         string mensajeDetalle)
     {
-        var host = _config["Email:Host"];
-        var remCorreo = _config["Email:RemitenteCorreo"];
-        var password = _config["Email:Password"];
-
-        if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(remCorreo) || string.IsNullOrWhiteSpace(password))
-            return;
-
         try
         {
-            var mensaje = new MimeMessage();
-            mensaje.From.Add(new MailboxAddress(_config["Email:RemitenteNombre"] ?? "LupitaRoute", remCorreo));
-            mensaje.To.Add(new MailboxAddress(nombreDestino, correoDestino));
-            mensaje.Subject = $"[LupitaRoute] {tituloEvento} - {codigoRastreo}";
+            var apiKey = _config["Email:BrevoApiKey"];
+            var remitenteNombre = _config["Email:RemitenteNombre"] ?? "LupitaRoute Paquetería";
+            var remitenteCorreo = _config["Email:RemitenteCorreo"] ?? "lupitaroutes@gmail.com";
 
-            mensaje.Body = new TextPart("html")
-            {
-                Text = $@"
-                <div style='font-family: Arial, sans-serif; max-width: 520px; margin: auto; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px;'>
-                    <h2 style='color: #1d4ed8; margin-top: 0;'>LupitaRoute - Actualización de Envío</h2>
-                    <p>Hola <strong>{nombreDestino}</strong>,</p>
-                    <p>{mensajeDetalle}</p>
-                    <div style='background: #f3f4f6; padding: 12px; border-radius: 6px; margin: 16px 0;'>
-                        <strong>Código de rastreo:</strong> <span style='font-family: monospace; font-size: 16px;'>{codigoRastreo}</span>
+            if (string.IsNullOrWhiteSpace(apiKey))
+                return;
+
+            var htmlBody = $@"
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;'>
+                    <div style='background-color: #d6336c; color: white; padding: 20px; text-align: center;'>
+                        <h2 style='margin: 0;'>LupitaRoute Paquetería</h2>
                     </div>
-                    <p style='font-size: 12px; color: #6b7280;'>Este es un mensaje automático de LupitaRoute.</p>
-                </div>"
+                    <div style='padding: 20px; color: #333;'>
+                        <p>Hola <strong>{nombreDestino}</strong>,</p>
+                        <h3 style='color: #d6336c;'>{tituloEvento}</h3>
+                        <p>{mensajeDetalle}</p>
+                        <div style='background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0; text-align: center;'>
+                            <span style='font-size: 12px; color: #666;'>Código de rastreo:</span><br/>
+                            <strong style='font-size: 20px; letter-spacing: 1px;'>{codigoRastreo}</strong>
+                        </div>
+                        <p style='font-size: 12px; color: #888;'>Gracias por confiar en LupitaRoute.</p>
+                    </div>
+                </div>";
+
+            var payload = new
+            {
+                sender = new { name = remitenteNombre, email = remitenteCorreo },
+                to = new[]
+                {
+                    new
+                    {
+                        email = correoDestino,
+                        name = string.IsNullOrWhiteSpace(nombreDestino) ? correoDestino : nombreDestino
+                    }
+                },
+                subject = $"LupitaRoute ({codigoRastreo}) - {tituloEvento}",
+                htmlContent = htmlBody
             };
 
-            using var client = new MailKit.Net.Smtp.SmtpClient();
-            int port = int.TryParse(_config["Email:Port"], out var p) ? p : 587;
-            await client.ConnectAsync(host, port, SecureSocketOptions.StartTls);
-            await client.AuthenticateAsync(remCorreo, password);
-            await Task.Run(() => client.Send(mensaje));
-            await client.DisconnectAsync(true);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email");
+            request.Headers.Add("api-key", apiKey);
+            request.Content = JsonContent.Create(payload);
+
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "No se pudo enviar el correo de notificación para {Codigo}", codigoRastreo);
+            Console.WriteLine($"Error enviando correo con Brevo: {ex.Message}");
         }
     }
 }
