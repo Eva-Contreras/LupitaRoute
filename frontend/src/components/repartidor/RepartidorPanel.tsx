@@ -5,7 +5,7 @@ import { MisEntregas } from './MisEntregas'
 import { NavegacionRepartidor } from './NavegacionRepartidor'
 import type { SeccionRepartidor } from './NavegacionRepartidor'
 import { useEntregas } from '../../hooks/useEntregas'
-import { actualizarEstado, obtenerEstados } from '../../services/envios'
+import { asignarYRegistrarRecoleccion, obtenerEstados } from '../../services/envios'
 
 interface RepartidorPanelProps {
   token: string
@@ -52,7 +52,7 @@ export function RepartidorPanel({
       if (recolectados.length !== 1) {
         throw new Error('No se pudo identificar el estado Recolectado en el catálogo.')
       }
-      await actualizarEstado(token, envioId, recolectados[0].estadoId, null)
+      await asignarYRegistrarRecoleccion(token, envioId, recolectados[0].estadoId)
       setRecoleccion({ envioId, codigo })
       reintentar()
       setSeccion('entregas')

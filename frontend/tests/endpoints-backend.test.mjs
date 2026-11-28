@@ -2,6 +2,94 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { createServer } from 'vite'
 
+const envioCompleto = {
+  envioId: 17,
+  codigoRastreo: 'LUP-2026-0017',
+  remitente: 'Ana',
+  receptor: 'Luis',
+  direccionOrigen: 'Origen 1',
+  direccionDestino: 'Destino 2',
+  descripcionPaquete: 'Caja',
+  pesoKg: 2,
+  distanciaKm: 10,
+  costoTotal: 50,
+  estadoActualId: 1,
+  estadoActual: 'Creado',
+  fechaCreacion: '2026-01-01T10:00:00',
+}
+
+test('asigna el envío antes de registrar la recolección', async () => {
+  const fetchOriginal = globalThis.fetch
+  const urlOriginal = process.env.VITE_API_URL
+  process.env.VITE_API_URL = 'https://example.invalid'
+  const server = await createServer({ server: { middlewareMode: true, hmr: false }, appType: 'custom' })
+
+  try {
+    const { asignarYRegistrarRecoleccion } =
+      await server.ssrLoadModule('/src/services/envios.ts')
+    const solicitudes = []
+    globalThis.fetch = async (url, opciones) => {
+      solicitudes.push({ url, opciones })
+      if (solicitudes.length === 1) {
+        return new Response(JSON.stringify(envioCompleto), { status: 200 })
+      }
+      return new Response(JSON.stringify({ mensaje: 'Estado actualizado correctamente.' }), {
+        status: 200,
+      })
+    }
+
+    await asignarYRegistrarRecoleccion('token-prueba', 17, 2)
+
+    assert.equal(solicitudes.length, 2)
+    assert.equal(solicitudes[0].url, 'https://example.invalid/api/Envios/17/asignar')
+    assert.equal(solicitudes[0].opciones.method, 'PUT')
+    assert.equal(solicitudes[0].opciones.headers.Authorization, 'Bearer token-prueba')
+    assert.equal(solicitudes[0].opciones.body, undefined)
+    assert.equal(solicitudes[1].url, 'https://example.invalid/api/Envios/17/estado')
+    assert.equal(solicitudes[1].opciones.method, 'PUT')
+    assert.equal(solicitudes[1].opciones.headers.Authorization, 'Bearer token-prueba')
+    assert.deepEqual(JSON.parse(solicitudes[1].opciones.body), {
+      nuevoEstadoId: 2,
+      comentario: null,
+    })
+  } finally {
+    globalThis.fetch = fetchOriginal
+    if (urlOriginal === undefined) delete process.env.VITE_API_URL
+    else process.env.VITE_API_URL = urlOriginal
+    await server.close()
+  }
+})
+
+test('no intenta registrar la recolección si la asignación falla', async () => {
+  const fetchOriginal = globalThis.fetch
+  const urlOriginal = process.env.VITE_API_URL
+  process.env.VITE_API_URL = 'https://example.invalid'
+  const server = await createServer({ server: { middlewareMode: true, hmr: false }, appType: 'custom' })
+
+  try {
+    const { asignarYRegistrarRecoleccion } =
+      await server.ssrLoadModule('/src/services/envios.ts')
+    let solicitudes = 0
+    globalThis.fetch = async () => {
+      solicitudes += 1
+      return new Response(JSON.stringify({ mensaje: 'Este envío ya fue tomado.' }), {
+        status: 400,
+      })
+    }
+
+    await assert.rejects(
+      asignarYRegistrarRecoleccion('token-prueba', 17, 2),
+      /Este envío ya fue tomado/,
+    )
+    assert.equal(solicitudes, 1)
+  } finally {
+    globalThis.fetch = fetchOriginal
+    if (urlOriginal === undefined) delete process.env.VITE_API_URL
+    else process.env.VITE_API_URL = urlOriginal
+    await server.close()
+  }
+})
+
 test('consume tarifas, verifica receptores y asigna envíos con los contratos del backend', async () => {
   const fetchOriginal = globalThis.fetch
   const urlOriginal = process.env.VITE_API_URL
@@ -55,10 +143,7 @@ test('consume tarifas, verifica receptores y asigna envíos con los contratos de
 
     globalThis.fetch = async (url, opciones) => {
       solicitud = { url, opciones }
-      return new Response(JSON.stringify({
-        envioId: 17,
-        codigoRastreo: 'LUP-2026-0017',
-      }), { status: 200 })
+      return new Response(JSON.stringify(envioCompleto), { status: 200 })
     }
     assert.equal((await asignarEnvio('token-prueba', 17)).envioId, 17)
     assert.equal(solicitud.url, 'https://example.invalid/api/Envios/17/asignar')
@@ -147,6 +232,53 @@ test('registra cada tipo de usuario con su rol y comunica errores del backend', 
     globalThis.fetch = fetchOriginal
     if (urlOriginal === undefined) delete process.env.VITE_API_URL
     else process.env.VITE_API_URL = urlOriginal
+    await server.close()
+  }
+})
+
+test('rechaza respuestas que rompen el contrato indicando el campo', async () => {
+  const fetchOriginal = globalThis.fetch
+  const urlOriginal = process.env.VITE_API_URL
+  process.env.VITE_API_URL = 'https://example.invalid'
+  const server = await createServer({ server: { middlewareMode: true, hmr: false }, appType: 'custom' })
+
+  try {
+    const { obtenerEnviosDisponibles } = await server.ssrLoadModule('/src/services/envios.ts')
+    const { costoTotal, ...incompleto } = envioCompleto
+    globalThis.fetch = async () => new Response(JSON.stringify([envioCompleto, incompleto]), { status: 200 })
+
+    await assert.rejects(
+      () => obtenerEnviosDisponibles('token-prueba'),
+      (error) => error.name === 'ErrorApi' && error.message.includes('costoTotal'),
+    )
+  } finally {
+    globalThis.fetch = fetchOriginal
+    if (urlOriginal === undefined) delete process.env.VITE_API_URL
+    else process.env.VITE_API_URL = urlOriginal
+    await server.close()
+  }
+})
+
+test('el repartidor no puede elegir el estado Cancelado', async () => {
+  const server = await createServer({ server: { middlewareMode: true, hmr: false }, appType: 'custom' })
+
+  try {
+    const React = await import('react')
+    const { renderToString } = await import('react-dom/server')
+    const { ActualizarEstado } = await server.ssrLoadModule('/src/components/repartidor/ActualizarEstado.tsx')
+    const html = renderToString(React.createElement(ActualizarEstado, {
+      entregas: [envioCompleto],
+      estados: [
+        { estadoId: 2, nombre: 'Recolectado', descripcion: '' },
+        { estadoId: 5, nombre: 'Cancelado', descripcion: '' },
+      ],
+      envioIdInicial: 17,
+      onGuardar: async () => {},
+    }))
+
+    assert.match(html, /Recolectado/)
+    assert.doesNotMatch(html, /Cancelado/)
+  } finally {
     await server.close()
   }
 })

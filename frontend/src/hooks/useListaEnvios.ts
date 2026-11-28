@@ -8,11 +8,17 @@ export interface ErrorVista {
   sesionExpirada: boolean
 }
 
-export function aErrorVista(error: unknown): ErrorVista {
+export function aErrorVista(
+  error: unknown,
+  mensajePorDefecto = 'Ocurrió un error inesperado.',
+): ErrorVista {
   if (error instanceof ErrorApi) {
     return { mensaje: error.message, sesionExpirada: error.estado === 401 }
   }
-  return { mensaje: 'Ocurrió un error inesperado.', sesionExpirada: false }
+  return {
+    mensaje: error instanceof Error ? error.message : mensajePorDefecto,
+    sesionExpirada: false,
+  }
 }
 
 interface Consulta {

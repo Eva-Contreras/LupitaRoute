@@ -18,6 +18,9 @@ export function ActualizarEstado({
   envioIdInicial,
   onGuardar,
 }: ActualizarEstadoProps) {
+  const estadosDisponibles = estados.filter(
+    (estado) => estado.nombre.trim().toLocaleLowerCase('es-MX') !== 'cancelado',
+  )
   const [envioId, setEnvioId] = useState(
     envioIdInicial === null ? '' : String(envioIdInicial),
   )
@@ -143,7 +146,7 @@ export function ActualizarEstado({
                 required
               >
                 <option value="">Selecciona un estado</option>
-                {estados.map((estado) => (
+                {estadosDisponibles.map((estado) => (
                   <option key={estado.estadoId} value={estado.estadoId}>
                     {estado.nombre}
                   </option>

@@ -1,6 +1,6 @@
 # LupitaRoute
 
-Plataforma web integral para la gestión, cotización y rastreo en tiempo real de envíos y paquetería. Permite a los remitentes calcular tarifas y generar guías de envío, a los repartidores actualizar el estado y ubicación de los paquetes asignados, y a los receptores consultar el historial cronológico de sus entregas mediante un código de rastreo.
+Plataforma web integral para la gestión, cotización y rastreo en tiempo real de envíos y paquetería. Permite a los remitentes calcular tarifas y generar guías de envío, a los repartidores asignarse envíos disponibles y actualizar su estado, y a los receptores consultar el historial cronológico de sus entregas mediante un código de rastreo.
 
 ## Integrantes y Roles
 * **Eva Guadalupe Contreras Antúnez** (`23100150`) — Frontend y DevOps
@@ -11,8 +11,8 @@ Plataforma web integral para la gestión, cotización y rastreo en tiempo real d
 ---
 
 ## Enlaces Desplegados
-* **Aplicación Web (Frontend):** `https://pendiente-despliegue-frontend.vercel.app` *(actualizar al desplegar)*
-* **API REST (Backend):** `https://pendiente-despliegue-api.onrender.com` *(actualizar al desplegar)*
+- **Aplicación Web (Frontend):** https://lupita-route.vercel.app
+- **API REST (Backend):** https://lupitaroutes.runasp.net
 
 ---
 
@@ -27,10 +27,10 @@ La documentación visual de la arquitectura se encuentra en la carpeta `docs/mod
 ---
 
 ## Stack Tecnológico
-* **Frontend:** React 19, TypeScript, Vite, CSS modular.
-* **Backend:** ASP.NET Core Web API (.NET 10), autenticación con JWT (JSON Web Tokens).
-* **Base de Datos:** SQL Server.
-* **CI/CD:** GitHub Actions (validación automática de lint y compilación en `develop` y `main`).
+* **Frontend:** React 19, TypeScript, Vite, CSS global (`frontend/src/styles.css`).
+* **Backend:** ASP.NET Core Web API (.NET 10), Dapper, autenticación con JWT (JSON Web Tokens), notificaciones por correo con MailKit y documentación de la API con Scalar.
+* **Base de Datos:** SQL Server, con la lógica de datos en stored procedures.
+* **CI:** GitHub Actions (lint y compilación del frontend y compilación del backend en `develop` y `main`).
 
 ---
 
@@ -42,7 +42,7 @@ La documentación visual de la arquitectura se encuentra en la carpeta `docs/mod
 | **Dependency Injection (DI)** | `backend/LupitaRoute.Api/Program.cs`, Controladores y Servicios (`IEnvioService`, `IAuthService`, `IEmailService`) | Evita el acoplamiento fuerte entre clases mediante la inversión de control nativa de ASP.NET Core, permitiendo inyectar interfaces en tiempo de ejecución. |
 | **DTO (Data Transfer Object)** | `backend/LupitaRoute.Api/DTOs/` (`AuthDtos.cs`, `EnvioDtos.cs`) | Separa los modelos internos de base de datos de los contratos JSON expuestos en la API, protegiendo campos sensibles y validando entradas. |
 | **Service Layer** | `backend/LupitaRoute.Api/Services/` (`EnvioService.cs`, `AuthService.cs`, `EmailService.cs`) | Encapsula las reglas de negocio (cálculo de tarifas, generación de guías `LUP-2026-XXXX`, validaciones de cambio de estado y envío de correos) fuera de los controladores. |
-| **Custom Hooks & Service Abstraction** | `frontend/src/hooks/` (`useEnvios.ts`, `useEntregas.ts`, `useListaEnvios.ts`) y `frontend/src/services/` | Separa la lógica de consumo HTTP y manejo de estado de los componentes visuales de React, reutilizando la lógica de filtrado, paginación y autenticación. |
+| **Custom Hooks & Service Abstraction** | `frontend/src/hooks/` (`useEnvios.ts`, `useEntregas.ts`, `useListaEnvios.ts`) y `frontend/src/services/` (`http.ts`, `lector.ts`, `auth.ts`, `envios.ts`) | Separa el consumo HTTP y el estado de los componentes visuales. `http.ts` centraliza la URL, el token y los errores; `lector.ts` valida que cada respuesta cumpla el contrato de la API. |
 
 ---
 
@@ -74,6 +74,34 @@ dotnet user-secrets init
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Database=LupitaRouteDb;Trusted_Connection=True;TrustServerCertificate=True;"
 dotnet user-secrets set "Jwt:Key" "ClaveSecretaSuperSeguraDeAlMenos32Caracteres!"
 
+# Opcional: contraseña del correo emisor para las notificaciones (Email:Password).
+# Si no se configura, el envío de correos se omite y se registra una advertencia.
+dotnet user-secrets set "Email:Password" "<contraseña-de-aplicación>"
+
 # Restaurar dependencias y ejecutar
 dotnet restore
-dotnet run
+dotnet run --launch-profile https
+```
+
+La API queda en `https://localhost:7234` y su documentación interactiva (Scalar) está disponible mientras corre en modo desarrollo.
+
+### 3. Frontend (React + Vite)
+```bash
+cd frontend
+cp .env.example .env.local   # en PowerShell: Copy-Item .env.example .env.local
+npm install
+npm run dev
+```
+
+`VITE_API_URL` debe apuntar a la API (por defecto `https://localhost:7234`). La aplicación queda en `http://localhost:5173`.
+
+### 4. Validaciones
+```bash
+cd frontend
+npm run lint
+npm run build
+node --test tests/endpoints-backend.test.mjs
+```
+
+Para el backend: `dotnet build backend/LupitaRoute.Api/LupitaRoute.Api.csproj --configuration Release`.
+
