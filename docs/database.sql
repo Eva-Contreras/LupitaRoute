@@ -327,8 +327,8 @@ BEGIN
         SET EstadoActualId = @NuevoEstadoId
         WHERE EnvioId = @EnvioId;
 
-        INSERT INTO HistorialEstados (EnvioId, EstadoId, UsuarioCambioId, Comentario)
-        VALUES (@EnvioId, @NuevoEstadoId, @UsuarioCambioId, @Comentario);
+        INSERT INTO HistorialEstados (EnvioId, EstadoId, UsuarioCambioId, Comentario, FechaCambio)
+        VALUES (@EnvioId, @NuevoEstadoId, @UsuarioCambioId, @Comentario, GETUTCDATE());
 
         COMMIT TRANSACTION;
         SELECT @CodigoRastreo AS CodigoRastreo;
@@ -394,12 +394,13 @@ BEGIN
         WHERE EnvioId = @EnvioId;
 
         -- Registrar el movimiento de asignación en el historial manteniendo el estado actual (Creado)
-        INSERT INTO HistorialEstados (EnvioId, EstadoId, UsuarioCambioId, Comentario)
+        INSERT INTO HistorialEstados (EnvioId, EstadoId, UsuarioCambioId, Comentario, FechaCambio)
         VALUES (
             @EnvioId,
             @EstadoCreadoId,
             @RepartidorId,
-            ISNULL(NULLIF(LTRIM(RTRIM(@Comentario)), N''), N'Envío asignado al repartidor.')
+            ISNULL(NULLIF(LTRIM(RTRIM(@Comentario)), N''), N'Envío asignado al repartidor.'),
+            GETUTCDATE()
         );
 
         COMMIT TRANSACTION;
@@ -457,17 +458,17 @@ BEGIN
 
         INSERT INTO Envios (
             CodigoRastreo, RemitenteId, ReceptorId, DireccionOrigen, DireccionDestino,
-            DescripcionPaquete, PesoKg, DistanciaKm, CostoTotal, EstadoActualId
+            DescripcionPaquete, PesoKg, DistanciaKm, CostoTotal, EstadoActualId, FechaCreacion
         )
         VALUES (
             @CodigoRastreo, @RemitenteId, @ReceptorId, @DireccionOrigen, @DireccionDestino,
-            @DescripcionPaquete, @PesoKg, @DistanciaKm, @CostoTotal, @EstadoCreadoId
+            @DescripcionPaquete, @PesoKg, @DistanciaKm, @CostoTotal, @EstadoCreadoId, GETUTCDATE()
         );
 
         DECLARE @NuevoEnvioId INT = SCOPE_IDENTITY();
 
-        INSERT INTO HistorialEstados (EnvioId, EstadoId, UsuarioCambioId, Comentario)
-        VALUES (@NuevoEnvioId, @EstadoCreadoId, @RemitenteId, N'Envío creado y cotizado.');
+        INSERT INTO HistorialEstados (EnvioId, EstadoId, UsuarioCambioId, Comentario, FechaCambio)
+        VALUES (@NuevoEnvioId, @EstadoCreadoId, @RemitenteId, N'Envío creado y cotizado.', GETUTCDATE());
 
         COMMIT TRANSACTION;
 
